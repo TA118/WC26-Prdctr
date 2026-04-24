@@ -21,6 +21,7 @@ import type { Group, Team, Standing } from '../types';
 import { computeStandings } from './standings';
 import { getBestThirdPlaced } from './thirdPlace';
 import type { ThirdPlacedTeam } from './thirdPlace';
+import { THIRD_PLACE_MATCHUPS } from '../data/knockoutMapping';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,4 +68,36 @@ export function getQualifiedTeams(groups: Group[]): QualifiedTeams {
   const thirdPlacers = getBestThirdPlaced(groups).slice(0, 8);
 
   return { groupQualifiers, thirdPlacers };
+}
+
+/**
+ * Look up which group winner a third-place team faces in the Round of 32.
+ *
+ * Uses Annex C of the FIFA 2026 regulations: for each of the 495 possible
+ * sets of 8 qualifying third-place groups, a fixed bracket assigns each
+ * third-place team to face a specific group winner (never their own group).
+ *
+ * @param topEight - The current top-8 ranked third-place teams (must be 8).
+ * @param thirdPlaceGroupId - The group whose 3rd-place team we're looking up.
+ * @param groups - All 12 groups (to resolve the winner's actual Team object).
+ * @returns The Team that would face this third-place team, or null if unknown.
+ */
+export function getThirdPlaceMatchup(
+  topEight: ThirdPlacedTeam[],
+  thirdPlaceGroupId: string,
+  groups: Group[],
+): Team | null {
+  if (topEight.length < 8) return null;
+
+  const key = topEight.map(t => t.groupId).sort().join('');
+  const row = THIRD_PLACE_MATCHUPS[key];
+  if (!row) return null;
+
+  const winnerGroupId = row[thirdPlaceGroupId];
+  if (!winnerGroupId) return null;
+
+  const group = groups.find(g => g.id === winnerGroupId);
+  if (!group) return null;
+
+  return computeStandings(group.teams, group.matches)[0]?.team ?? null;
 }

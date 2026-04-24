@@ -95,7 +95,7 @@ export default function App() {
         ) : activeTab === THIRD_TAB ? (
           <section>
             <h2>3rd Places</h2>
-            <BestThirdTable teams={bestThird} />
+            <BestThirdTable teams={bestThird} groups={groups} />
             <p className="qualify-note">Top 8 teams qualify ↑</p>
           </section>
         ) : current ? (

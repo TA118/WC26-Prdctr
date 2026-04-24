@@ -115,6 +115,11 @@ tbody td.team-col { text-align: left; }
   padding-left: 3px;
 }
 
+.matchup-col {
+  white-space: nowrap;
+  color: #c4b5fd;
+}
+
 /* ── Matches ── */
 .match-list {
   display: flex;
