@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Group, ManualRankings } from './types';
+import type { KnockoutResults } from './components/KnockoutStage';
 import { INITIAL_GROUPS } from './data/groups';
 import { getBestThirdPlaced } from './logic/thirdPlace';
 import { GroupView } from './components/GroupView';
@@ -9,12 +10,45 @@ import './index.css';
 
 const THIRD_TAB = '3rd';
 const KO_TAB = 'ko';
+const STORAGE_KEY = 'wc26_predictor';
+
+function deepCloneInitial(): Group[] {
+  return JSON.parse(JSON.stringify(INITIAL_GROUPS));
+}
 
 export default function App() {
-  const [groups, setGroups] = useState<Group[]>(INITIAL_GROUPS);
+  const [groups, setGroups] = useState<Group[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw).groups ?? deepCloneInitial();
+    } catch { /* ignore */ }
+    return deepCloneInitial();
+  });
   const [activeTab, setActiveTab] = useState('A');
-  // Per-group manual tiebreak rankings, cleared whenever scores in that group change
-  const [allManualRankings, setAllManualRankings] = useState<Record<string, ManualRankings>>({});
+  const [allManualRankings, setAllManualRankings] = useState<Record<string, ManualRankings>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw).allManualRankings ?? {};
+    } catch { /* ignore */ }
+    return {};
+  });
+  const [knockoutResults, setKnockoutResults] = useState<KnockoutResults>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw).knockoutResults ?? {};
+    } catch { /* ignore */ }
+    return {};
+  });
+  const [saveLabel, setSaveLabel] = useState<'save' | 'saved'>('save');
+
+  // Restore indicator — show "Restored" briefly on first load if data existed
+  const [restored] = useState(() => !!localStorage.getItem(STORAGE_KEY));
+  const [showRestored, setShowRestored] = useState(restored);
+  useEffect(() => {
+    if (!showRestored) return;
+    const t = setTimeout(() => setShowRestored(false), 2500);
+    return () => clearTimeout(t);
+  }, [showRestored]);
 
   const handleScoreChange = useCallback(
     (groupId: string, matchId: string, homeScore: number | null, awayScore: number | null) => {
@@ -24,7 +58,6 @@ export default function App() {
           matches: g.matches.map(m => m.id === matchId ? { ...m, homeScore, awayScore } : m),
         }
       ));
-      // A score change may create or resolve ties — reset manual decision for this group
       setAllManualRankings(prev => ({ ...prev, [groupId]: {} }));
     },
     []
@@ -36,6 +69,22 @@ export default function App() {
     },
     []
   );
+
+  const handleSave = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ groups, allManualRankings, knockoutResults }));
+      setSaveLabel('saved');
+      setTimeout(() => setSaveLabel('save'), 2000);
+    } catch { /* ignore */ }
+  }, [groups, allManualRankings, knockoutResults]);
+
+  const handleReset = useCallback(() => {
+    if (!confirm('Reset all scores and results? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    setGroups(deepCloneInitial());
+    setAllManualRankings({});
+    setKnockoutResults({});
+  }, []);
 
   const totalPlayed = groups.reduce(
     (sum, g) => sum + g.matches.filter(m => m.homeScore !== null && m.awayScore !== null).length,
@@ -54,6 +103,15 @@ export default function App() {
       <header>
         <h1>⚽ World Cup 2026</h1>
         <p className="subtitle">Group Stage · {totalPlayed} / 72 matches played</p>
+        <div className="header-actions">
+          {showRestored && <span className="action-note">Progress restored</span>}
+          <button className="action-btn action-btn--save" onClick={handleSave}>
+            {saveLabel === 'saved' ? '✓ Saved' : 'Save'}
+          </button>
+          <button className="action-btn action-btn--reset" onClick={handleReset}>
+            Reset
+          </button>
+        </div>
       </header>
 
       <nav className="group-tabs">
@@ -91,7 +149,11 @@ export default function App() {
 
       <main>
         {activeTab === KO_TAB ? (
-          <KnockoutStage groups={groups} />
+          <KnockoutStage
+            groups={groups}
+            knockoutResults={knockoutResults}
+            onKnockoutResultsChange={setKnockoutResults}
+          />
         ) : activeTab === THIRD_TAB ? (
           <section>
             <h2>3rd Places</h2>

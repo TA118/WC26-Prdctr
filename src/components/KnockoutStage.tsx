@@ -1,103 +1,309 @@
-/**
- * Knockout Stage UI
- *
- * Currently shows the list of 32 qualified teams as a placeholder.
- *
- * TODO (future steps):
- *   1. Call assignBracketSlots() once implemented in knockoutMapping.ts
- *   2. Render the full Round of 32 bracket with match inputs
- *   3. Continue through R16 → QF → SF → Final
- */
-
-import { useMemo } from 'react';
-import type { Group } from '../types';
+import { useCallback, useMemo } from 'react';
+import type { Group, Team } from '../types';
 import { getQualifiedTeams } from '../logic/knockoutMapping';
+import type { GroupQualifier } from '../logic/knockoutMapping';
+import type { ThirdPlacedTeam } from '../logic/thirdPlace';
+import { ALL_MATCHES, R32, R16, QF, SF, THIRD_PLACE, FINAL } from '../data/knockoutBracket';
+import type { SlotRef, MatchDef } from '../data/knockoutBracket';
+import { THIRD_PLACE_MATCHUPS } from '../data/knockoutMapping';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface BracketTeam {
+  team: Team | null;
+  label: string;
+}
+
+interface BracketMatch {
+  id: number;
+  top: BracketTeam;
+  bottom: BracketTeam;
+}
+
+export interface KnockoutResult {
+  home: number | null;
+  away: number | null;
+  penaltyWinner: string | null;
+}
+
+export type KnockoutResults = Record<number, KnockoutResult>;
+
+// ─── Downstream clearing ──────────────────────────────────────────────────────
+
+function getDownstreamIds(matchId: number): number[] {
+  const ids: number[] = [];
+  const queue = [matchId];
+  const seen = new Set([matchId]);
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const m of ALL_MATCHES) {
+      if (seen.has(m.id)) continue;
+      const refs = [m.top, m.bottom];
+      if (refs.some(r => (r.kind === 'match-winner' || r.kind === 'match-loser') && r.id === id)) {
+        ids.push(m.id);
+        seen.add(m.id);
+        queue.push(m.id);
+      }
+    }
+  }
+  return ids;
+}
+
+// ─── Bracket resolution ───────────────────────────────────────────────────────
+
+function getWinner(match: BracketMatch, results: KnockoutResults): Team | null {
+  const r = results[match.id];
+  if (!r || r.home === null || r.away === null) return null;
+  if (r.home > r.away) return match.top.team;
+  if (r.away > r.home) return match.bottom.team;
+  if (!r.penaltyWinner) return null;
+  return r.penaltyWinner === match.top.team?.id ? match.top.team : match.bottom.team;
+}
+
+function resolveSlot(
+  ref: SlotRef,
+  qfs: GroupQualifier[],
+  thirds: ThirdPlacedTeam[],
+  results: KnockoutResults,
+  opponentGroupId?: string,
+): BracketTeam {
+  switch (ref.kind) {
+    case 'winner': {
+      const t = qfs.find(q => q.groupId === ref.group && q.position === 1)?.team ?? null;
+      return { team: t, label: `W-${ref.group}` };
+    }
+    case 'runner': {
+      const t = qfs.find(q => q.groupId === ref.group && q.position === 2)?.team ?? null;
+      return { team: t, label: `R-${ref.group}` };
+    }
+    case 'third': {
+      if (opponentGroupId && thirds.length === 8) {
+        const key = thirds.map(t => t.groupId).sort().join('');
+        const row = THIRD_PLACE_MATCHUPS[key];
+        const match = row && thirds.find(t => row[t.groupId] === opponentGroupId);
+        if (match) return { team: match.team, label: `3rd ${match.groupId}` };
+      }
+      return { team: null, label: `3rd ${ref.groups.join('/')}` };
+    }
+    case 'match-winner': {
+      const def = ALL_MATCHES.find(m => m.id === ref.id);
+      if (!def) return { team: null, label: `W${ref.id}` };
+      const bm = resolveBracketMatch(def, qfs, thirds, results);
+      const w = getWinner(bm, results);
+      return w ? { team: w, label: w.name } : { team: null, label: `W${ref.id}` };
+    }
+    case 'match-loser': {
+      const def = ALL_MATCHES.find(m => m.id === ref.id);
+      if (!def) return { team: null, label: `L${ref.id}` };
+      const bm = resolveBracketMatch(def, qfs, thirds, results);
+      const w = getWinner(bm, results);
+      if (!w) return { team: null, label: `L${ref.id}` };
+      const loser = w.id === bm.top.team?.id ? bm.bottom.team : bm.top.team;
+      return loser ? { team: loser, label: loser.name } : { team: null, label: `L${ref.id}` };
+    }
+  }
+}
+
+function resolveBracketMatch(
+  def: MatchDef,
+  qfs: GroupQualifier[],
+  thirds: ThirdPlacedTeam[],
+  results: KnockoutResults,
+): BracketMatch {
+  // For R32 third-place slots: find the opponent group winner so the 495-map can resolve the team
+  const opponentGroup = (slot: SlotRef, other: SlotRef): string | undefined => {
+    if (slot.kind === 'third' && other.kind === 'winner') return other.group;
+    return undefined;
+  };
+  return {
+    id: def.id,
+    top:    resolveSlot(def.top,    qfs, thirds, results, opponentGroup(def.top,    def.bottom)),
+    bottom: resolveSlot(def.bottom, qfs, thirds, results, opponentGroup(def.bottom, def.top)),
+  };
+}
+
+// ─── Match card ───────────────────────────────────────────────────────────────
+
+function MatchCard({
+  match,
+  result,
+  onScore,
+  onPenalty,
+}: {
+  match: BracketMatch;
+  result: KnockoutResult | undefined;
+  onScore: (id: number, home: number | null, away: number | null) => void;
+  onPenalty: (id: number, teamId: string) => void;
+}) {
+  const canPlay = match.top.team !== null && match.bottom.team !== null;
+  const home = result?.home ?? null;
+  const away = result?.away ?? null;
+  const penWinner = result?.penaltyWinner ?? null;
+  const isDraw = home !== null && away !== null && home === away;
+
+  let winnerId: string | null = null;
+  if (home !== null && away !== null) {
+    if (home > away) winnerId = match.top.team?.id ?? null;
+    else if (away > home) winnerId = match.bottom.team?.id ?? null;
+    else winnerId = penWinner;
+  }
+
+  const handleInput = (side: 'home' | 'away', val: string) => {
+    const n = val === '' ? null : Math.max(0, parseInt(val, 10) || 0);
+    onScore(match.id, side === 'home' ? n : home, side === 'away' ? n : away);
+  };
+
+  const renderRow = (bt: BracketTeam, side: 'home' | 'away') => {
+    const score = side === 'home' ? home : away;
+    const isWinner = winnerId !== null && winnerId === bt.team?.id;
+    const isLoser  = winnerId !== null && bt.team !== null && winnerId !== bt.team.id;
+    return (
+      <div className={`bk-row${isWinner ? ' bk-row--win' : isLoser ? ' bk-row--lose' : ''}`}>
+        <div className="bk-team-info">
+          {bt.team ? (
+            <><span className="flag">{bt.team.flag}</span>
+              <span className="bk-name">{bt.team.name}</span></>
+          ) : (
+            <span className="bk-placeholder">{bt.label}</span>
+          )}
+        </div>
+        {canPlay && (
+          <input
+            className="bk-score"
+            type="number"
+            min={0}
+            value={score ?? ''}
+            onChange={e => handleInput(side, e.target.value)}
+          />
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="bk-match">
+      {renderRow(match.top, 'home')}
+      {renderRow(match.bottom, 'away')}
+      {isDraw && (
+        <div className="bk-penalty">
+          <div className="bk-penalty-q">Penalty shoot-out — who wins?</div>
+          <div className="bk-penalty-btns">
+            {([match.top, match.bottom] as BracketTeam[]).map(bt => bt.team && (
+              <button
+                key={bt.team.id}
+                className={`bk-pen-btn${penWinner === bt.team.id ? ' bk-pen-btn--sel' : ''}`}
+                onClick={() => onPenalty(match.id, penWinner === bt.team!.id ? '' : bt.team!.id)}
+              >
+                <span className="flag">{bt.team.flag}</span>
+                <span className="bk-pen-name">{bt.team.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Round section ────────────────────────────────────────────────────────────
+
+function Round({
+  label,
+  subtitle,
+  matches,
+  single = false,
+  results,
+  onScore,
+  onPenalty,
+}: {
+  label: string;
+  subtitle: string;
+  matches: BracketMatch[];
+  single?: boolean;
+  results: KnockoutResults;
+  onScore: (id: number, h: number | null, a: number | null) => void;
+  onPenalty: (id: number, teamId: string) => void;
+}) {
+  return (
+    <section className="bk-round">
+      <div className="bk-round-header">
+        <span className="bk-round-label">{label}</span>
+        {subtitle && <span className="bk-round-sub">{subtitle}</span>}
+      </div>
+      <div className={`bk-grid${single ? ' bk-grid--single' : ''}`}>
+        {matches.map(m => (
+          <MatchCard
+            key={m.id}
+            match={m}
+            result={results[m.id]}
+            onScore={onScore}
+            onPenalty={onPenalty}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
   groups: Group[];
+  knockoutResults: KnockoutResults;
+  onKnockoutResultsChange: (updater: (prev: KnockoutResults) => KnockoutResults) => void;
 }
 
-export function KnockoutStage({ groups }: Props) {
+export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResultsChange }: Props) {
   const { groupQualifiers, thirdPlacers } = useMemo(
     () => getQualifiedTeams(groups),
-    [groups]
+    [groups],
   );
 
+  const resolve = useCallback(
+    (defs: MatchDef[]) => defs.map(def => resolveBracketMatch(def, groupQualifiers, thirdPlacers, results)),
+    [groupQualifiers, thirdPlacers, results],
+  );
+
+  const r32        = useMemo(() => resolve(R32),         [resolve]);
+  const r16        = useMemo(() => resolve(R16),         [resolve]);
+  const qf         = useMemo(() => resolve(QF),          [resolve]);
+  const sf         = useMemo(() => resolve(SF),          [resolve]);
+  const thirdPlace = useMemo(() => resolve(THIRD_PLACE), [resolve]);
+  const fin        = useMemo(() => resolve(FINAL),       [resolve]);
+
+  const handleScore = useCallback((matchId: number, home: number | null, away: number | null) => {
+    onKnockoutResultsChange(prev => {
+      const next = { ...prev };
+      for (const id of getDownstreamIds(matchId)) delete next[id];
+      next[matchId] = { home, away, penaltyWinner: null };
+      return next;
+    });
+  }, [onKnockoutResultsChange]);
+
+  const handlePenalty = useCallback((matchId: number, teamId: string) => {
+    onKnockoutResultsChange(prev => {
+      const next = { ...prev };
+      for (const id of getDownstreamIds(matchId)) delete next[id];
+      next[matchId] = { ...prev[matchId], penaltyWinner: teamId || null };
+      return next;
+    });
+  }, [onKnockoutResultsChange]);
+
+  const common = { results, onScore: handleScore, onPenalty: handlePenalty };
+
   return (
-    <div className="knockout-stage">
+    <div className="knockout-stage bk">
       <div className="knockout-header">
         <h2>Knockout Stage</h2>
-        <p className="knockout-sub">
-          Round of 32 bracket — slot assignments coming soon
-        </p>
+        <p className="knockout-sub">Enter scores — winners advance automatically</p>
       </div>
 
-      <div className="ko-columns">
-        {/* ── Group qualifiers ── */}
-        <section className="ko-section">
-          <h3>Group Qualifiers <span className="ko-count">({groupQualifiers.length} / 24)</span></h3>
-          <table className="ko-table">
-            <thead>
-              <tr>
-                <th>Grp</th>
-                <th>Pos</th>
-                <th className="team-col">Team</th>
-                <th title="Points">Pts</th>
-                <th title="Goal Difference">GD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupQualifiers.map(({ team, groupId, position, standing }) => (
-                <tr key={`${groupId}-${position}`} className={position === 1 ? 'ko-first' : 'ko-second'}>
-                  <td className="group-badge">{groupId}</td>
-                  <td className="ko-pos">{position === 1 ? '🥇' : '🥈'}</td>
-                  <td className="team-col">
-                    <span className="flag">{team.flag}</span>
-                    {team.name}
-                  </td>
-                  <td className="pts">{standing.points}</td>
-                  <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>
-                    {standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        {/* ── Best 3rd-place qualifiers ── */}
-        <section className="ko-section">
-          <h3>Best 3rd Place <span className="ko-count">({thirdPlacers.length} / 8)</span></h3>
-          <table className="ko-table">
-            <thead>
-              <tr>
-                <th>Grp</th>
-                <th>Rank</th>
-                <th className="team-col">Team</th>
-                <th title="Points">Pts</th>
-                <th title="Goal Difference">GD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {thirdPlacers.map((t, i) => (
-                <tr key={t.team.id}>
-                  <td className="group-badge">{t.groupId}</td>
-                  <td className="ko-pos ko-third">{i + 1}</td>
-                  <td className="team-col">
-                    <span className="flag">{t.team.flag}</span>
-                    {t.team.name}
-                  </td>
-                  <td className="pts">{t.points}</td>
-                  <td className={t.goalDifference > 0 ? 'positive' : t.goalDifference < 0 ? 'negative' : ''}>
-                    {t.goalDifference > 0 ? `+${t.goalDifference}` : t.goalDifference}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="qualify-note">Top 8 of 12 third-place teams qualify ↑</p>
-        </section>
-      </div>
+      <Round label="Round of 32"    subtitle="16 matches" matches={r32}        {...common} />
+      <Round label="Round of 16"    subtitle="8 matches"  matches={r16}        {...common} />
+      <Round label="Quarter-finals" subtitle="4 matches"  matches={qf}         {...common} />
+      <Round label="Semi-finals"    subtitle="2 matches"  matches={sf}         {...common} />
+      <Round label="3rd Place"      subtitle=""           matches={thirdPlace} single {...common} />
+      <Round label="Final"          subtitle=""           matches={fin}        single {...common} />
     </div>
   );
 }
