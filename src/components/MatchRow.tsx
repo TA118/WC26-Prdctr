@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import type { Match, Team } from '../types';
+import { GROUP_SCHEDULE } from '../data/groupSchedule';
 
 interface Props {
   match: Match;
   teams: Team[];
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
+}
+
+function formatKickoff(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+  return `${date} · ${time}`;
 }
 
 export function MatchRow({ match, teams, onScoreChange }: Props) {
@@ -23,36 +31,45 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
   }, [homeVal, awayVal]);
 
   const played = homeVal !== '' && awayVal !== '';
+  const schedule = GROUP_SCHEDULE[match.id];
 
   return (
-    <div className={`match-row ${played ? 'played' : ''}`}>
-      <span className="match-team home">
-        <span className="flag">{home.flag}</span>
-        {home.name}
-      </span>
-      <div className="score-inputs">
-        <input
-          type="number"
-          min="0"
-          max="99"
-          value={homeVal}
-          onChange={(e) => setHomeVal(e.target.value)}
-          placeholder="–"
-        />
-        <span className="score-sep">:</span>
-        <input
-          type="number"
-          min="0"
-          max="99"
-          value={awayVal}
-          onChange={(e) => setAwayVal(e.target.value)}
-          placeholder="–"
-        />
+    <div className="match-row-wrapper">
+      <div className={`match-row ${played ? 'played' : ''}`}>
+        <span className="match-team home">
+          <span className="flag">{home.flag}</span>
+          {home.name}
+        </span>
+        <div className="score-inputs">
+          <input
+            type="number"
+            min="0"
+            max="99"
+            value={homeVal}
+            onChange={(e) => setHomeVal(e.target.value)}
+            placeholder="–"
+          />
+          <span className="score-sep">:</span>
+          <input
+            type="number"
+            min="0"
+            max="99"
+            value={awayVal}
+            onChange={(e) => setAwayVal(e.target.value)}
+            placeholder="–"
+          />
+        </div>
+        <span className="match-team away">
+          <span className="flag">{away.flag}</span>
+          {away.name}
+        </span>
       </div>
-      <span className="match-team away">
-        <span className="flag">{away.flag}</span>
-        {away.name}
-      </span>
+      {schedule && (
+        <div className="match-row-meta">
+          <span>{formatKickoff(schedule.kickoff)}</span>
+          <span className="match-row-venue">{schedule.venue}</span>
+        </div>
+      )}
     </div>
   );
 }

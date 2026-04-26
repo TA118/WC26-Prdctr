@@ -153,6 +153,7 @@ export default function App() {
             groups={groups}
             knockoutResults={knockoutResults}
             onKnockoutResultsChange={setKnockoutResults}
+            locked={totalPlayed < 72}
           />
         ) : activeTab === THIRD_TAB ? (
           <section>

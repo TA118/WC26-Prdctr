@@ -18,6 +18,15 @@ interface BracketMatch {
   id: number;
   top: BracketTeam;
   bottom: BracketTeam;
+  kickoff: string;
+  venue: string;
+}
+
+function formatKickoff(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+  return `${date} · ${time}`;
 }
 
 export interface KnockoutResult {
@@ -117,6 +126,8 @@ function resolveBracketMatch(
   };
   return {
     id: def.id,
+    kickoff: def.kickoff,
+    venue: def.venue,
     top:    resolveSlot(def.top,    qfs, thirds, results, opponentGroup(def.top,    def.bottom)),
     bottom: resolveSlot(def.bottom, qfs, thirds, results, opponentGroup(def.bottom, def.top)),
   };
@@ -127,15 +138,17 @@ function resolveBracketMatch(
 function MatchCard({
   match,
   result,
+  locked,
   onScore,
   onPenalty,
 }: {
   match: BracketMatch;
   result: KnockoutResult | undefined;
+  locked: boolean;
   onScore: (id: number, home: number | null, away: number | null) => void;
   onPenalty: (id: number, teamId: string) => void;
 }) {
-  const canPlay = match.top.team !== null && match.bottom.team !== null;
+  const canPlay = !locked && match.top.team !== null && match.bottom.team !== null;
   const home = result?.home ?? null;
   const away = result?.away ?? null;
   const penWinner = result?.penaltyWinner ?? null;
@@ -184,6 +197,10 @@ function MatchCard({
     <div className="bk-match">
       {renderRow(match.top, 'home')}
       {renderRow(match.bottom, 'away')}
+      <div className="bk-match-meta">
+        <span>{formatKickoff(match.kickoff)}</span>
+        <span className="bk-venue">{match.venue}</span>
+      </div>
       {isDraw && (
         <div className="bk-penalty">
           <div className="bk-penalty-q">Penalty shoot-out — who wins?</div>
@@ -212,6 +229,7 @@ function Round({
   subtitle,
   matches,
   single = false,
+  locked,
   results,
   onScore,
   onPenalty,
@@ -220,6 +238,7 @@ function Round({
   subtitle: string;
   matches: BracketMatch[];
   single?: boolean;
+  locked: boolean;
   results: KnockoutResults;
   onScore: (id: number, h: number | null, a: number | null) => void;
   onPenalty: (id: number, teamId: string) => void;
@@ -236,6 +255,7 @@ function Round({
             key={m.id}
             match={m}
             result={results[m.id]}
+            locked={locked}
             onScore={onScore}
             onPenalty={onPenalty}
           />
@@ -251,9 +271,10 @@ interface Props {
   groups: Group[];
   knockoutResults: KnockoutResults;
   onKnockoutResultsChange: (updater: (prev: KnockoutResults) => KnockoutResults) => void;
+  locked?: boolean;
 }
 
-export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResultsChange }: Props) {
+export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResultsChange, locked = false }: Props) {
   const { groupQualifiers, thirdPlacers } = useMemo(
     () => getQualifiedTeams(groups),
     [groups],
@@ -289,13 +310,17 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
     });
   }, [onKnockoutResultsChange]);
 
-  const common = { results, onScore: handleScore, onPenalty: handlePenalty };
+  const common = { locked, results, onScore: handleScore, onPenalty: handlePenalty };
 
   return (
     <div className="knockout-stage bk">
       <div className="knockout-header">
         <h2>Knockout Stage</h2>
-        <p className="knockout-sub">Enter scores — winners advance automatically</p>
+        <p className="knockout-sub">
+          {locked
+            ? 'Complete all group stage matches to enter knockout results'
+            : 'Enter scores — winners advance automatically'}
+        </p>
       </div>
 
       <Round label="Round of 32"    subtitle="16 matches" matches={r32}        {...common} />
