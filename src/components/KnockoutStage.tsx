@@ -281,7 +281,10 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
   );
 
   const resolve = useCallback(
-    (defs: MatchDef[]) => defs.map(def => resolveBracketMatch(def, groupQualifiers, thirdPlacers, results)),
+    (defs: MatchDef[]) =>
+      [...defs]
+        .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
+        .map(def => resolveBracketMatch(def, groupQualifiers, thirdPlacers, results)),
     [groupQualifiers, thirdPlacers, results],
   );
 
