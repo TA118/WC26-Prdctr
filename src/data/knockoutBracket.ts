@@ -53,7 +53,7 @@ export const QF: MatchDef[] = [
   { id: 97,  top: MW(89), bottom: MW(90), kickoff: '2026-07-09T20:00:00Z', venue: 'Boston' },
   { id: 98,  top: MW(93), bottom: MW(94), kickoff: '2026-07-10T19:00:00Z', venue: 'Los Angeles' },
   { id: 99,  top: MW(91), bottom: MW(92), kickoff: '2026-07-11T21:00:00Z', venue: 'Miami' },
-  { id: 100, top: MW(95), bottom: MW(96), kickoff: '2026-07-11T01:00:00Z', venue: 'Kansas City' },
+  { id: 100, top: MW(95), bottom: MW(96), kickoff: '2026-07-12T01:00:00Z', venue: 'Kansas City' },
 ];
 
 export const SF: MatchDef[] = [
