@@ -83,9 +83,9 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
 
   // ── Group K ──────────────────────────────────────────────────────────────
   'K-m1': { kickoff: '2026-06-17T17:00:00Z', venue: 'Houston' },
-  'K-m2': { kickoff: '2026-06-17T02:00:00Z', venue: 'Mexico City' },
+  'K-m2': { kickoff: '2026-06-18T02:00:00Z', venue: 'Mexico City' },
   'K-m3': { kickoff: '2026-06-23T17:00:00Z', venue: 'Houston' },
-  'K-m4': { kickoff: '2026-06-23T02:00:00Z', venue: 'Guadalajara' },
+  'K-m4': { kickoff: '2026-06-24T02:00:00Z', venue: 'Guadalajara' },
   'K-m5': { kickoff: '2026-06-27T23:30:00Z', venue: 'Miami' },
   'K-m6': { kickoff: '2026-06-27T23:30:00Z', venue: 'Atlanta' },
 
