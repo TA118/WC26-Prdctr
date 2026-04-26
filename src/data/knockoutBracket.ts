@@ -39,8 +39,8 @@ export const R32: MatchDef[] = [
 ];
 
 export const R16: MatchDef[] = [
-  { id: 89, top: MW(73), bottom: MW(75), kickoff: '2026-07-04T17:00:00Z', venue: 'Philadelphia' },
-  { id: 90, top: MW(74), bottom: MW(77), kickoff: '2026-07-04T21:00:00Z', venue: 'Houston' },
+  { id: 89, top: MW(73), bottom: MW(75), kickoff: '2026-07-04T17:00:00Z', venue: 'Houston' },
+  { id: 90, top: MW(74), bottom: MW(77), kickoff: '2026-07-04T21:00:00Z', venue: 'Philadelphia' },
   { id: 91, top: MW(76), bottom: MW(78), kickoff: '2026-07-05T20:00:00Z', venue: 'New York/NJ' },
   { id: 92, top: MW(79), bottom: MW(80), kickoff: '2026-07-06T00:00:00Z', venue: 'Mexico City' },
   { id: 93, top: MW(83), bottom: MW(84), kickoff: '2026-07-06T19:00:00Z', venue: 'Dallas' },
