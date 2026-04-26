@@ -20,7 +20,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   // ── Group C ──────────────────────────────────────────────────────────────
   'C-m1': { kickoff: '2026-06-13T22:00:00Z', venue: 'New York/NJ' },
   'C-m2': { kickoff: '2026-06-14T01:00:00Z', venue: 'Boston' },
-  'C-m3': { kickoff: '2026-06-20T00:30:00Z', venue: 'Philadelphia' },
+  'C-m3': { kickoff: '2026-06-20T01:00:00Z', venue: 'Philadelphia' },
   'C-m4': { kickoff: '2026-06-19T22:00:00Z', venue: 'Boston' },
   'C-m5': { kickoff: '2026-06-24T22:00:00Z', venue: 'Miami' },
   'C-m6': { kickoff: '2026-06-24T22:00:00Z', venue: 'Atlanta' },
@@ -29,7 +29,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'D-m1': { kickoff: '2026-06-13T01:00:00Z', venue: 'Los Angeles' },
   'D-m2': { kickoff: '2026-06-14T04:00:00Z', venue: 'Vancouver' },
   'D-m3': { kickoff: '2026-06-19T19:00:00Z', venue: 'Seattle' },
-  'D-m4': { kickoff: '2026-06-20T03:00:00Z', venue: 'San Francisco' },
+  'D-m4': { kickoff: '2026-06-20T04:00:00Z', venue: 'San Francisco' },
   'D-m5': { kickoff: '2026-06-26T02:00:00Z', venue: 'Los Angeles' },
   'D-m6': { kickoff: '2026-06-26T02:00:00Z', venue: 'San Francisco' },
 
@@ -63,7 +63,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'H-m3': { kickoff: '2026-06-21T16:00:00Z', venue: 'Atlanta' },
   'H-m4': { kickoff: '2026-06-21T22:00:00Z', venue: 'Miami' },
   'H-m5': { kickoff: '2026-06-27T00:00:00Z', venue: 'Guadalajara' },
-  'H-m6': { kickoff: '2026-06-26T00:00:00Z', venue: 'Houston' },
+  'H-m6': { kickoff: '2026-06-27T00:00:00Z', venue: 'Houston' },
 
   // ── Group I ──────────────────────────────────────────────────────────────
   'I-m1': { kickoff: '2026-06-16T19:00:00Z', venue: 'New York/NJ' },
@@ -78,8 +78,8 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'J-m2': { kickoff: '2026-06-16T04:00:00Z', venue: 'San Francisco' },
   'J-m3': { kickoff: '2026-06-22T17:00:00Z', venue: 'Dallas' },
   'J-m4': { kickoff: '2026-06-22T03:00:00Z', venue: 'San Francisco' },
-  'J-m5': { kickoff: '2026-06-27T01:00:00Z', venue: 'Dallas' },
-  'J-m6': { kickoff: '2026-06-27T01:00:00Z', venue: 'Kansas City' },
+  'J-m5': { kickoff: '2026-06-27T02:00:00Z', venue: 'Dallas' },
+  'J-m6': { kickoff: '2026-06-27T02:00:00Z', venue: 'Kansas City' },
 
   // ── Group K ──────────────────────────────────────────────────────────────
   'K-m1': { kickoff: '2026-06-17T17:00:00Z', venue: 'Houston' },
