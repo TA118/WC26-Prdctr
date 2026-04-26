@@ -13,7 +13,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'B-m1': { kickoff: '2026-06-12T19:00:00Z', venue: 'Toronto' },
   'B-m2': { kickoff: '2026-06-13T19:00:00Z', venue: 'San Francisco' },
   'B-m3': { kickoff: '2026-06-18T19:00:00Z', venue: 'Los Angeles' },
-  'B-m4': { kickoff: '2026-06-19T02:00:00Z', venue: 'Vancouver' },
+  'B-m4': { kickoff: '2026-06-18T22:00:00Z', venue: 'Vancouver' },
   'B-m5': { kickoff: '2026-06-24T19:00:00Z', venue: 'Vancouver' },
   'B-m6': { kickoff: '2026-06-24T19:00:00Z', venue: 'Seattle' },
 
@@ -34,7 +34,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'D-m6': { kickoff: '2026-06-26T02:00:00Z', venue: 'San Francisco' },
 
   // ── Group E ──────────────────────────────────────────────────────────────
-  'E-m1': { kickoff: '2026-06-14T16:00:00Z', venue: 'Houston' },
+  'E-m1': { kickoff: '2026-06-14T17:00:00Z', venue: 'Houston' },
   'E-m2': { kickoff: '2026-06-14T23:00:00Z', venue: 'Philadelphia' },
   'E-m3': { kickoff: '2026-06-20T20:00:00Z', venue: 'Toronto' },
   'E-m4': { kickoff: '2026-06-21T00:00:00Z', venue: 'Kansas City' },
@@ -46,7 +46,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'F-m2': { kickoff: '2026-06-15T02:00:00Z', venue: 'Guadalajara' },
   'F-m3': { kickoff: '2026-06-20T17:00:00Z', venue: 'Houston' },
   'F-m4': { kickoff: '2026-06-21T04:00:00Z', venue: 'Guadalajara' },
-  'F-m5': { kickoff: '2026-06-26T23:00:00Z', venue: 'Kansas City' },
+  'F-m5': { kickoff: '2026-06-25T23:00:00Z', venue: 'Kansas City' },
   'F-m6': { kickoff: '2026-06-25T23:00:00Z', venue: 'Dallas' },
 
   // ── Group G ──────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'H-m2': { kickoff: '2026-06-15T22:00:00Z', venue: 'Miami' },
   'H-m3': { kickoff: '2026-06-21T16:00:00Z', venue: 'Atlanta' },
   'H-m4': { kickoff: '2026-06-21T22:00:00Z', venue: 'Miami' },
-  'H-m5': { kickoff: '2026-06-26T04:00:00Z', venue: 'Guadalajara' },
+  'H-m5': { kickoff: '2026-06-27T00:00:00Z', venue: 'Guadalajara' },
   'H-m6': { kickoff: '2026-06-26T00:00:00Z', venue: 'Houston' },
 
   // ── Group I ──────────────────────────────────────────────────────────────
@@ -74,23 +74,23 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'I-m6': { kickoff: '2026-06-26T19:00:00Z', venue: 'Toronto' },
 
   // ── Group J ──────────────────────────────────────────────────────────────
-  'J-m1': { kickoff: '2026-06-16T00:00:00Z', venue: 'Kansas City' },
-  'J-m2': { kickoff: '2026-06-16T03:00:00Z', venue: 'San Francisco' },
-  'J-m3': { kickoff: '2026-06-22T16:00:00Z', venue: 'Dallas' },
+  'J-m1': { kickoff: '2026-06-16T01:00:00Z', venue: 'Kansas City' },
+  'J-m2': { kickoff: '2026-06-16T04:00:00Z', venue: 'San Francisco' },
+  'J-m3': { kickoff: '2026-06-22T17:00:00Z', venue: 'Dallas' },
   'J-m4': { kickoff: '2026-06-22T03:00:00Z', venue: 'San Francisco' },
   'J-m5': { kickoff: '2026-06-27T01:00:00Z', venue: 'Dallas' },
   'J-m6': { kickoff: '2026-06-27T01:00:00Z', venue: 'Kansas City' },
 
   // ── Group K ──────────────────────────────────────────────────────────────
-  'K-m1': { kickoff: '2026-06-17T16:00:00Z', venue: 'Houston' },
+  'K-m1': { kickoff: '2026-06-17T17:00:00Z', venue: 'Houston' },
   'K-m2': { kickoff: '2026-06-17T02:00:00Z', venue: 'Mexico City' },
-  'K-m3': { kickoff: '2026-06-23T16:00:00Z', venue: 'Houston' },
+  'K-m3': { kickoff: '2026-06-23T17:00:00Z', venue: 'Houston' },
   'K-m4': { kickoff: '2026-06-23T02:00:00Z', venue: 'Guadalajara' },
   'K-m5': { kickoff: '2026-06-27T23:30:00Z', venue: 'Miami' },
   'K-m6': { kickoff: '2026-06-27T23:30:00Z', venue: 'Atlanta' },
 
   // ── Group L ──────────────────────────────────────────────────────────────
-  'L-m1': { kickoff: '2026-06-17T19:00:00Z', venue: 'Dallas' },
+  'L-m1': { kickoff: '2026-06-17T20:00:00Z', venue: 'Dallas' },
   'L-m2': { kickoff: '2026-06-17T23:00:00Z', venue: 'Toronto' },
   'L-m3': { kickoff: '2026-06-23T20:00:00Z', venue: 'Boston' },
   'L-m4': { kickoff: '2026-06-23T23:00:00Z', venue: 'Toronto' },
