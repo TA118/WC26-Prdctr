@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Match, Team } from '../types';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import { gcalUrl } from '../utils/gcal';
@@ -22,8 +22,10 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
 
   const [homeVal, setHomeVal] = useState(match.homeScore !== null ? String(match.homeScore) : '');
   const [awayVal, setAwayVal] = useState(match.awayScore !== null ? String(match.awayScore) : '');
+  const isMounted = useRef(false);
 
   useEffect(() => {
+    if (!isMounted.current) { isMounted.current = true; return; }
     const hs = homeVal === '' ? null : parseInt(homeVal, 10);
     const as_ = awayVal === '' ? null : parseInt(awayVal, 10);
     const validH = hs !== null && !isNaN(hs) && hs >= 0;
