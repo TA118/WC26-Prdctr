@@ -229,6 +229,20 @@ tbody td.team-col { text-align: left; }
   color: #374151;
 }
 
+.gcal-btn {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: #4285f4;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+}
+.gcal-btn:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .match-team {
   font-size: 0.9rem;
   display: flex;

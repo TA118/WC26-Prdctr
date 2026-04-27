@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Match, Team } from '../types';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
+import { gcalUrl } from '../utils/gcal';
 
 interface Props {
   match: Match;
@@ -68,6 +69,12 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
         <div className="match-row-meta">
           <span>{formatKickoff(schedule.kickoff)}</span>
           <span className="match-row-venue">{schedule.venue}</span>
+          <a
+            className="gcal-btn"
+            href={gcalUrl(`${home.name} vs ${away.name}`, schedule.kickoff, schedule.venue)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >+ Google Calendar</a>
         </div>
       )}
     </div>

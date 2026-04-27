@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { Group, Team } from '../types';
+import { gcalUrl } from '../utils/gcal';
 import { getQualifiedTeams } from '../logic/knockoutMapping';
 import type { GroupQualifier } from '../logic/knockoutMapping';
 import type { ThirdPlacedTeam } from '../logic/thirdPlace';
@@ -200,6 +201,16 @@ function MatchCard({
       <div className="bk-match-meta">
         <span>{formatKickoff(match.kickoff)}</span>
         <span className="bk-venue">{match.venue}</span>
+        <a
+          className="gcal-btn"
+          href={gcalUrl(
+            `${match.top.team?.name ?? match.top.label} vs ${match.bottom.team?.name ?? match.bottom.label}`,
+            match.kickoff,
+            match.venue,
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+        >+ Google Calendar</a>
       </div>
       {isDraw && (
         <div className="bk-penalty">
