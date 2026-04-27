@@ -2,10 +2,11 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { Group, ManualRankings } from './types';
 import type { KnockoutResults } from './components/KnockoutStage';
 import { INITIAL_GROUPS } from './data/groups';
-import { getBestThirdPlaced } from './logic/thirdPlace';
+import { getBestThirdPlaced, getThirdPlaceBoundaryTies, applyThirdPlaceManualRankings } from './logic/thirdPlace';
 import { GroupView } from './components/GroupView';
 import { BestThirdTable } from './components/BestThirdTable';
 import { KnockoutStage } from './components/KnockoutStage';
+import { ManualTiebreakModal } from './components/ManualTiebreakModal';
 import './index.css';
 
 const THIRD_TAB = '3rd';
@@ -42,6 +43,13 @@ export default function App() {
     } catch { /* ignore */ }
     return {};
   });
+  const [thirdPlaceRankings, setThirdPlaceRankings] = useState<ManualRankings>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw).thirdPlaceRankings ?? {};
+    } catch { /* ignore */ }
+    return {};
+  });
   const [saveLabel, setSaveLabel] = useState<'save' | 'saved'>('save');
 
   // Restore indicator — show "Restored" briefly on first load if data existed
@@ -65,6 +73,7 @@ export default function App() {
         }
       ));
       setAllManualRankings(prev => ({ ...prev, [groupId]: {} }));
+      setThirdPlaceRankings({});
     },
     []
   );
@@ -78,7 +87,7 @@ export default function App() {
 
   const handleSave = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ groups, allManualRankings, knockoutResults }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ groups, allManualRankings, knockoutResults, thirdPlaceRankings }));
       setSaveLabel('saved');
       setTimeout(() => setSaveLabel('save'), 2000);
     } catch { /* ignore */ }
@@ -90,6 +99,7 @@ export default function App() {
     setGroups(deepCloneInitial());
     setAllManualRankings({});
     setKnockoutResults({});
+    setThirdPlaceRankings({});
   }, []);
 
   const totalPlayed = groups.reduce(
@@ -98,10 +108,20 @@ export default function App() {
   );
 
   const bestThird = useMemo(() => getBestThirdPlaced(groups), [groups]);
-  const qualifyingThirdIds = useMemo(
-    () => new Set(bestThird.slice(0, 8).map(t => t.team.id)),
-    [bestThird]
+  const sortedThirds = useMemo(
+    () => applyThirdPlaceManualRankings(bestThird, thirdPlaceRankings),
+    [bestThird, thirdPlaceRankings],
   );
+  const qualifyingThirdIds = useMemo(
+    () => new Set(sortedThirds.slice(0, 8).map(t => t.team.id)),
+    [sortedThirds],
+  );
+  const thirdPlaceUnresolvedTies = useMemo(() => {
+    if (totalPlayed !== 72) return [];
+    return getThirdPlaceBoundaryTies(bestThird).filter(
+      g => !g.every(id => thirdPlaceRankings[id] !== undefined)
+    );
+  }, [bestThird, thirdPlaceRankings, totalPlayed]);
   const current = groups.find(g => g.id === activeTab);
 
   return (
@@ -165,8 +185,16 @@ export default function App() {
         ) : activeTab === THIRD_TAB ? (
           <section>
             <h2>3rd Places</h2>
-            <BestThirdTable teams={bestThird} groups={groups} />
+            <BestThirdTable teams={sortedThirds} groups={groups} />
             <p className="qualify-note">Top 8 teams qualify ↑</p>
+            {thirdPlaceUnresolvedTies.length > 0 && (
+              <ManualTiebreakModal
+                tiedGroups={thirdPlaceUnresolvedTies}
+                teams={bestThird.map(t => t.team)}
+                onConfirm={setThirdPlaceRankings}
+                onDismiss={() => {}}
+              />
+            )}
           </section>
         ) : current ? (
           <GroupView
