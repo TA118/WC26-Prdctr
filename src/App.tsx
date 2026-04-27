@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { Group, ManualRankings } from './types';
 import type { KnockoutResults } from './components/KnockoutStage';
 import { INITIAL_GROUPS } from './data/groups';
@@ -24,6 +24,9 @@ export default function App() {
     } catch { /* ignore */ }
     return deepCloneInitial();
   });
+  // Always-current ref so handleScoreChange can read latest groups without a stale closure
+  const groupsRef = useRef(groups);
+  groupsRef.current = groups;
   const [activeTab, setActiveTab] = useState('A');
   const [allManualRankings, setAllManualRankings] = useState<Record<string, ManualRankings>>(() => {
     try {
@@ -52,6 +55,9 @@ export default function App() {
 
   const handleScoreChange = useCallback(
     (groupId: string, matchId: string, homeScore: number | null, awayScore: number | null) => {
+      const existing = groupsRef.current
+        .find(g => g.id === groupId)?.matches.find(m => m.id === matchId);
+      if (existing?.homeScore === homeScore && existing?.awayScore === awayScore) return;
       setGroups(prev => prev.map(g =>
         g.id !== groupId ? g : {
           ...g,
