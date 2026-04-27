@@ -139,10 +139,11 @@ export default function App() {
         <div className="tab-divider" />
 
         <button
-          className={`tab-btn tab-btn--third ${activeTab === THIRD_TAB ? 'active' : ''}`}
+          className={`tab-btn tab-btn--third ${activeTab === THIRD_TAB ? 'active' : ''} ${totalPlayed === 72 ? 'complete' : ''}`}
           onClick={() => setActiveTab(THIRD_TAB)}
         >
           3rd
+          {totalPlayed === 72 && <span className="tab-check">✓</span>}
         </button>
 
         <button
