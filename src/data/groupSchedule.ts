@@ -69,15 +69,15 @@ export const GROUP_SCHEDULE: Record<string, { kickoff: string; venue: string }> 
   'I-m1': { kickoff: '2026-06-16T19:00:00Z', venue: 'New York/NJ' },
   'I-m2': { kickoff: '2026-06-16T22:00:00Z', venue: 'Boston' },
   'I-m3': { kickoff: '2026-06-22T21:00:00Z', venue: 'Philadelphia' },
-  'I-m4': { kickoff: '2026-06-22T00:00:00Z', venue: 'New York/NJ' },
+  'I-m4': { kickoff: '2026-06-23T00:00:00Z', venue: 'New York/NJ' },
   'I-m5': { kickoff: '2026-06-26T19:00:00Z', venue: 'Boston' },
   'I-m6': { kickoff: '2026-06-26T19:00:00Z', venue: 'Toronto' },
 
   // ── Group J ──────────────────────────────────────────────────────────────
-  'J-m1': { kickoff: '2026-06-16T01:00:00Z', venue: 'Kansas City' },
-  'J-m2': { kickoff: '2026-06-16T04:00:00Z', venue: 'San Francisco' },
+  'J-m1': { kickoff: '2026-06-17T01:00:00Z', venue: 'Kansas City' },
+  'J-m2': { kickoff: '2026-06-17T04:00:00Z', venue: 'San Francisco' },
   'J-m3': { kickoff: '2026-06-22T17:00:00Z', venue: 'Dallas' },
-  'J-m4': { kickoff: '2026-06-22T03:00:00Z', venue: 'San Francisco' },
+  'J-m4': { kickoff: '2026-06-23T03:00:00Z', venue: 'San Francisco' },
   'J-m5': { kickoff: '2026-06-27T02:00:00Z', venue: 'Dallas' },
   'J-m6': { kickoff: '2026-06-27T02:00:00Z', venue: 'Kansas City' },
 

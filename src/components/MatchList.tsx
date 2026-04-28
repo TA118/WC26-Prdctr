@@ -1,5 +1,6 @@
 import type { Match, Team } from '../types';
 import { MatchRow } from './MatchRow';
+import { GROUP_SCHEDULE } from '../data/groupSchedule';
 
 interface Props {
   matches: Match[];
@@ -19,7 +20,13 @@ export function MatchList({ matches, teams, onScoreChange }: Props) {
   return (
     <div className="match-list">
       {rounds.map((round) => {
-        const roundMatches = matches.filter((m) => m.round === round);
+        const roundMatches = matches
+          .filter((m) => m.round === round)
+          .sort((a, b) => {
+            const ka = GROUP_SCHEDULE[a.id]?.kickoff ?? '';
+            const kb = GROUP_SCHEDULE[b.id]?.kickoff ?? '';
+            return ka.localeCompare(kb);
+          });
         return (
           <div key={round} className={`round-block ${round === 3 ? 'simultaneous' : ''}`}>
             <p className="round-label">{ROUND_LABEL[round]}</p>
