@@ -106,6 +106,7 @@ export default function App() {
     (sum, g) => sum + g.matches.filter(m => m.homeScore !== null && m.awayScore !== null).length,
     0
   );
+  const koPlayed = Object.values(knockoutResults).filter(r => r.home !== null && r.away !== null).length;
 
   const bestThird = useMemo(() => getBestThirdPlaced(groups), [groups]);
   const sortedThirds = useMemo(
@@ -128,7 +129,11 @@ export default function App() {
     <div className="app">
       <header>
         <h1>⚽ World Cup 2026</h1>
-        <p className="subtitle">Group Stage · {totalPlayed} / 72 matches played</p>
+        <p className="subtitle">
+          {activeTab === KO_TAB
+            ? `Knockout Stage · ${koPlayed} / 32 matches played`
+            : `Group Stage · ${totalPlayed} / 72 matches played`}
+        </p>
         <div className="header-actions">
           {showRestored && <span className="action-note">Progress restored</span>}
           <button className="action-btn action-btn--save" onClick={handleSave}>
