@@ -13,10 +13,126 @@ body {
   min-height: 100vh;
 }
 
+/* ── Home page ───────────────────────────────────────────────────────────── */
+
+.home-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  gap: 3rem;
+}
+
+.home-hero {
+  text-align: center;
+}
+
+.home-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.home-subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.home-cards {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+}
+
+.home-card {
+  flex: 1;
+  min-width: 260px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  background: #0d1117;
+  border: 1px solid #1e2535;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.15s;
+  color: inherit;
+}
+
+.home-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: #3b82f6;
+}
+
+.home-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.home-card-icon {
+  font-size: 2.5rem;
+}
+
+.home-card-body h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.home-card-body p {
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.home-card--simulator:hover:not(:disabled) { border-color: #3b82f6; }
+.home-card--prediction:hover:not(:disabled) { border-color: #f59e0b; }
+.home-card--live:hover:not(:disabled) { border-color: #10b981; }
+
+.back-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid #1e2535;
+  color: #9ca3af;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.back-btn:hover {
+  color: #e8eaf0;
+  border-color: #4b5563;
+}
+
+/* ── App (simulator) ─────────────────────────────────────────────────────── */
+
 .app {
   max-width: 760px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+}
+
+.action-btn--back {
+  background: none;
+  border-color: #1e2535;
+  color: #6b7280;
+}
+
+.action-btn--back:hover {
+  color: #e8eaf0;
+  border-color: #4b5563;
+  background: none;
 }
 
 header {

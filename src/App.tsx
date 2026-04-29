@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Group, ManualRankings } from './types';
 import type { KnockoutResults } from './components/KnockoutStage';
 import { INITIAL_GROUPS } from './data/groups';
@@ -18,6 +19,7 @@ function deepCloneInitial(): Group[] {
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -135,6 +137,7 @@ export default function App() {
             : `Group Stage · ${totalPlayed} / 72 matches played`}
         </p>
         <div className="header-actions">
+          <button className="action-btn action-btn--back" onClick={() => navigate('/')}>← Home</button>
           {showRestored && <span className="action-note">Progress restored</span>}
           <button className="action-btn action-btn--save" onClick={handleSave}>
             {saveLabel === 'saved' ? '✓ Saved' : 'Save'}
