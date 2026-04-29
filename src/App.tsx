@@ -129,15 +129,15 @@ export default function App() {
 
   return (
     <div className="app">
+      <button className="home-nav-btn" onClick={() => navigate('/')}>← Home</button>
       <header>
-        <h1>⚽ World Cup 2026</h1>
+        <h1>⚽ World Cup 2026 – Simulator</h1>
         <p className="subtitle">
           {activeTab === KO_TAB
             ? `Knockout Stage · ${koPlayed} / 32 matches played`
             : `Group Stage · ${totalPlayed} / 72 matches played`}
         </p>
         <div className="header-actions">
-          <button className="action-btn action-btn--back" onClick={() => navigate('/')}>← Home</button>
           {showRestored && <span className="action-note">Progress restored</span>}
           <button className="action-btn action-btn--save" onClick={handleSave}>
             {saveLabel === 'saved' ? '✓ Saved' : 'Save'}

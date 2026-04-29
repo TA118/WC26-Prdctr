@@ -123,16 +123,23 @@ body {
   padding: 2rem 1.5rem;
 }
 
-.action-btn--back {
+.home-nav-btn {
+  display: inline-flex;
+  align-items: center;
   background: none;
-  border-color: #1e2535;
+  border: 1px solid #1e2535;
   color: #6b7280;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+  transition: color 0.15s, border-color 0.15s;
 }
 
-.action-btn--back:hover {
+.home-nav-btn:hover {
   color: #e8eaf0;
   border-color: #4b5563;
-  background: none;
 }
 
 header {
