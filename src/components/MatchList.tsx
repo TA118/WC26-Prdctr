@@ -2,9 +2,13 @@ import type { Match, Team } from '../types';
 import { MatchRow } from './MatchRow';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 
+interface ActualScore { homeScore: number | null; awayScore: number | null; }
+
 interface Props {
   matches: Match[];
   teams: Team[];
+  locked?: boolean;
+  actualScores?: Record<string, ActualScore>;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
 }
 
@@ -14,7 +18,7 @@ const ROUND_LABEL: Record<number, string> = {
   3: 'Matchday 3 — Simultaneous',
 };
 
-export function MatchList({ matches, teams, onScoreChange }: Props) {
+export function MatchList({ matches, teams, locked = false, actualScores, onScoreChange }: Props) {
   const rounds = [1, 2, 3] as const;
 
   return (
@@ -35,6 +39,9 @@ export function MatchList({ matches, teams, onScoreChange }: Props) {
                 key={match.id}
                 match={match}
                 teams={teams}
+                locked={locked}
+                actualHomeScore={actualScores?.[match.id]?.homeScore}
+                actualAwayScore={actualScores?.[match.id]?.awayScore}
                 onScoreChange={onScoreChange}
               />
             ))}

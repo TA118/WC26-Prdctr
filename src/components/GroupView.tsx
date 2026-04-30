@@ -9,23 +9,26 @@ interface Props {
   group: Group;
   manualRankings: ManualRankings;
   qualifyingThirdIds: Set<string>;
+  locked?: boolean;
+  actualGroup?: Group;
+  useActualForStandings?: boolean;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
   onManualRankingsChange: (rankings: ManualRankings) => void;
 }
 
-export function GroupView({ group, manualRankings, qualifyingThirdIds, onScoreChange, onManualRankingsChange }: Props) {
-  const allPlayed = group.matches.every(m => m.homeScore !== null && m.awayScore !== null);
-  const playedCount = group.matches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
+export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = false, actualGroup, useActualForStandings = false, onScoreChange, onManualRankingsChange }: Props) {
+  const standingsMatches = useActualForStandings && actualGroup ? actualGroup.matches : group.matches;
+  const allPlayed = standingsMatches.every(m => m.homeScore !== null && m.awayScore !== null);
+  const playedCount = standingsMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
 
   const { standings, unresolvedGroups } = useMemo(() => {
-    const raw = computeStandings(group.teams, group.matches);
+    const raw = computeStandings(group.teams, standingsMatches);
     const withManual = applyManualRankings(raw, manualRankings);
-    // Only surface unresolved ties once all matches are played
     const unresolved = allPlayed
       ? getTiedGroups(raw).filter(g => !g.every(id => manualRankings[id] !== undefined))
       : [];
     return { standings: withManual, unresolvedGroups: unresolved };
-  }, [group, manualRankings, allPlayed]);
+  }, [group.teams, standingsMatches, manualRankings, allPlayed]);
 
   return (
     <div className="group-view">
@@ -37,7 +40,15 @@ export function GroupView({ group, manualRankings, qualifyingThirdIds, onScoreCh
       <StandingsTable standings={standings} qualifyingThirdIds={qualifyingThirdIds} />
       <p className="qualify-note">Top 2 qualify ↑</p>
 
-      <MatchList matches={group.matches} teams={group.teams} onScoreChange={onScoreChange} />
+      <MatchList
+        matches={group.matches}
+        teams={group.teams}
+        locked={locked}
+        actualScores={actualGroup && Object.fromEntries(
+          actualGroup.matches.map(m => [m.id, { homeScore: m.homeScore, awayScore: m.awayScore }])
+        )}
+        onScoreChange={onScoreChange}
+      />
 
       {unresolvedGroups.length > 0 && (
         <ManualTiebreakModal

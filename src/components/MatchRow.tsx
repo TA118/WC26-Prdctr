@@ -2,10 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import type { Match, Team } from '../types';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import { gcalUrl } from '../utils/gcal';
+import { scoreGroupMatch } from '../logic/predictionScoring';
 
 interface Props {
   match: Match;
   teams: Team[];
+  locked?: boolean;
+  actualHomeScore?: number | null;
+  actualAwayScore?: number | null;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
 }
 
@@ -16,7 +20,10 @@ function formatKickoff(iso: string): string {
   return `${date} · ${time}`;
 }
 
-export function MatchRow({ match, teams, onScoreChange }: Props) {
+const PTS_CLASS = ['match-pts--miss', 'match-pts--dir', 'match-pts--exact'];
+const PTS_LABEL = ['0 pts', '1 pt', '2 pts'];
+
+export function MatchRow({ match, teams, locked = false, actualHomeScore, actualAwayScore, onScoreChange }: Props) {
   const home = teams.find((t) => t.id === match.homeTeamId)!;
   const away = teams.find((t) => t.id === match.awayTeamId)!;
 
@@ -36,6 +43,13 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
   const played = homeVal !== '' && awayVal !== '';
   const schedule = GROUP_SCHEDULE[match.id];
 
+  const hasActual = actualHomeScore !== null && actualHomeScore !== undefined
+    && actualAwayScore !== null && actualAwayScore !== undefined;
+  const hasPred = homeVal !== '' && awayVal !== '';
+  const pts = hasActual && hasPred
+    ? scoreGroupMatch(parseInt(homeVal, 10), parseInt(awayVal, 10), actualHomeScore!, actualAwayScore!)
+    : null;
+
   return (
     <div className="match-row-wrapper">
       <div className={`match-row ${played ? 'played' : ''}`}>
@@ -51,8 +65,11 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
             value={homeVal}
             onChange={(e) => setHomeVal(e.target.value)}
             placeholder="–"
+            disabled={locked}
           />
+          {hasActual && <span className="actual-score">({actualHomeScore})</span>}
           <span className="score-sep">:</span>
+          {hasActual && <span className="actual-score">({actualAwayScore})</span>}
           <input
             type="number"
             min="0"
@@ -60,6 +77,7 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
             value={awayVal}
             onChange={(e) => setAwayVal(e.target.value)}
             placeholder="–"
+            disabled={locked}
           />
         </div>
         <span className="match-team away">
@@ -77,6 +95,11 @@ export function MatchRow({ match, teams, onScoreChange }: Props) {
             target="_blank"
             rel="noopener noreferrer"
           >+ Google Calendar</a>
+        </div>
+      )}
+      {pts !== null && (
+        <div className={`match-pts ${PTS_CLASS[pts]}`}>
+          {PTS_LABEL[pts]}
         </div>
       )}
     </div>

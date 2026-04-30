@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { AuthModal } from '../components/AuthModal';
 
 const DEADLINE = new Date('2026-06-11T19:00:00Z');
 
@@ -27,37 +25,26 @@ function formatCountdown(ms: number): string {
     : `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-export function PredictionPage() {
+export function FullWCHubPage() {
   const navigate = useNavigate();
   const msLeft = useCountdown(DEADLINE);
   const isPastDeadline = msLeft <= 0;
-  const { user, username, signOut } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
 
   return (
     <div className="home-page">
-      <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
-
-      {user && (
-        <div className="auth-bar-top">
-          <span className="auth-bar-welcome">
-            Welcome, <strong>{username ?? user.email}</strong>
-            <button className="auth-bar-signout" onClick={signOut}>Sign Out</button>
-          </span>
-        </div>
-      )}
+      <button className="back-btn" onClick={() => navigate('/prediction')}>← Back</button>
 
       <div className="home-hero">
-        <h1 className="home-title">🎯 Prediction Games</h1>
-        <p className="home-subtitle">Choose your prediction mode</p>
+        <h1 className="home-title">📋 Full WC Predictions</h1>
+        <p className="home-subtitle">Predict every match from the World Cup 2026</p>
       </div>
 
-      <div className="home-cards">
-        <button className="home-card home-card--prediction" onClick={() => navigate('/prediction/full')}>
-          <div className="home-card-icon">📋</div>
+      <div className="home-cards hub-cards">
+        <button className="home-card home-card--prediction" onClick={() => navigate('/prediction/full/predict')}>
+          <div className="home-card-icon">🎯</div>
           <div className="home-card-body">
-            <h2>Full WC Predictions</h2>
-            <p>Predict every match from the World Cup before the tournament begins.</p>
+            <h2>My Predictions</h2>
+            <p>Fill your prediction for each one of the matches in the World Cup.</p>
             <div className="card-countdown">
               {isPastDeadline ? (
                 <span className="card-countdown--locked">🔒 Predictions locked</span>
@@ -71,24 +58,22 @@ export function PredictionPage() {
           </div>
         </button>
 
-        <button className="home-card home-card--live" disabled>
-          <div className="home-card-icon">📡</div>
+        <button className="home-card home-card--groups" onClick={() => navigate('/prediction/full/groups')}>
+          <div className="home-card-icon">👥</div>
           <div className="home-card-body">
-            <h2>Live WC Prediction</h2>
-            <p>Coming soon — predict match by match as the tournament unfolds in real time.</p>
+            <h2>My Groups</h2>
+            <p>Compete with friends in private leagues and see where you stand on the global leaderboard.</p>
+          </div>
+        </button>
+
+        <button className="home-card home-card--rules" onClick={() => navigate('/prediction/full/rules')}>
+          <div className="home-card-icon">📖</div>
+          <div className="home-card-body">
+            <h2>Rules of the Game</h2>
+            <p>Learn how the scoring system works and how points are awarded for each match.</p>
           </div>
         </button>
       </div>
-
-      {!user && (
-        <div className="auth-bar">
-          <button className="auth-bar-btn auth-bar-btn--primary" onClick={() => setShowAuth(true)}>
-            Sign In / Register
-          </button>
-        </div>
-      )}
-
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }

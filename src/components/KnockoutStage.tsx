@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { Group, Team } from '../types';
 import { gcalUrl } from '../utils/gcal';
 import { getQualifiedTeams } from '../logic/knockoutMapping';
@@ -140,12 +140,16 @@ function MatchCard({
   match,
   result,
   locked,
+  actualMatch,
+  actualResult,
   onScore,
   onPenalty,
 }: {
   match: BracketMatch;
   result: KnockoutResult | undefined;
   locked: boolean;
+  actualMatch?: BracketMatch;
+  actualResult?: KnockoutResult;
   onScore: (id: number, home: number | null, away: number | null) => void;
   onPenalty: (id: number, teamId: string) => void;
 }) {
@@ -154,6 +158,8 @@ function MatchCard({
   const away = result?.away ?? null;
   const penWinner = result?.penaltyWinner ?? null;
   const isDraw = home !== null && away !== null && home === away;
+  const hasActualResult = actualResult !== undefined
+    && actualResult.home !== null && actualResult.away !== null;
 
   let winnerId: string | null = null;
   if (home !== null && away !== null) {
@@ -169,27 +175,52 @@ function MatchCard({
 
   const renderRow = (bt: BracketTeam, side: 'home' | 'away') => {
     const score = side === 'home' ? home : away;
+    const actualBt = side === 'home' ? actualMatch?.top : actualMatch?.bottom;
+    const actualScore = side === 'home' ? actualResult?.home : actualResult?.away;
     const isWinner = winnerId !== null && winnerId === bt.team?.id;
     const isLoser  = winnerId !== null && bt.team !== null && winnerId !== bt.team.id;
+    const actualDiffers = actualBt?.team && bt.team && actualBt.team.id !== bt.team.id;
+    const actualFills   = actualBt?.team && !bt.team;
     return (
       <div className={`bk-row${isWinner ? ' bk-row--win' : isLoser ? ' bk-row--lose' : ''}`}>
         <div className="bk-team-info">
           {bt.team ? (
-            <><span className="flag">{bt.team.flag}</span>
-              <span className="bk-name">{bt.team.name}</span></>
+            <>
+              <span className="flag">{bt.team.flag}</span>
+              <span className="bk-name">{bt.team.name}</span>
+              {actualDiffers && (
+                <span className="bk-actual-team">
+                  ({actualBt!.team!.flag} {actualBt!.team!.name})
+                </span>
+              )}
+            </>
           ) : (
-            <span className="bk-placeholder">{bt.label}</span>
+            <span className="bk-placeholder">
+              {bt.label}
+              {actualFills && (
+                <span className="bk-actual-team">
+                  {' '}({actualBt!.team!.flag} {actualBt!.team!.name})
+                </span>
+              )}
+            </span>
           )}
         </div>
-        {canPlay && (
-          <input
-            className="bk-score"
-            type="number"
-            min={0}
-            value={score ?? ''}
-            onChange={e => handleInput(side, e.target.value)}
-          />
-        )}
+        <div className="bk-score-area">
+          {canPlay ? (
+            <input
+              className="bk-score"
+              type="number"
+              min={0}
+              value={score ?? ''}
+              onChange={e => handleInput(side, e.target.value)}
+            />
+          ) : score !== null ? (
+            <span className="bk-score-static">{score}</span>
+          ) : null}
+          {hasActualResult && actualScore !== null && actualScore !== undefined && (
+            <span className="actual-score">({actualScore})</span>
+          )}
+        </div>
       </div>
     );
   };
@@ -242,6 +273,8 @@ function Round({
   single = false,
   locked,
   results,
+  actualMatches,
+  actualResults,
   onScore,
   onPenalty,
 }: {
@@ -251,6 +284,8 @@ function Round({
   single?: boolean;
   locked: boolean;
   results: KnockoutResults;
+  actualMatches?: BracketMatch[];
+  actualResults?: KnockoutResults;
   onScore: (id: number, h: number | null, a: number | null) => void;
   onPenalty: (id: number, teamId: string) => void;
 }) {
@@ -267,6 +302,8 @@ function Round({
             match={m}
             result={results[m.id]}
             locked={locked}
+            actualMatch={actualMatches?.find(a => a.id === m.id)}
+            actualResult={actualResults?.[m.id]}
             onScore={onScore}
             onPenalty={onPenalty}
           />
@@ -283,9 +320,12 @@ interface Props {
   knockoutResults: KnockoutResults;
   onKnockoutResultsChange: (updater: (prev: KnockoutResults) => KnockoutResults) => void;
   locked?: boolean;
+  actualGroups?: Group[];
+  actualKnockoutResults?: KnockoutResults;
+  onFinalWinner?: (team: Team | null) => void;
 }
 
-export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResultsChange, locked = false }: Props) {
+export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResultsChange, locked = false, actualGroups, actualKnockoutResults, onFinalWinner }: Props) {
   const { groupQualifiers, thirdPlacers } = useMemo(
     () => getQualifiedTeams(groups),
     [groups],
@@ -299,12 +339,39 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
     [groupQualifiers, thirdPlacers, results],
   );
 
+  const { groupQualifiers: actualQualifiers, thirdPlacers: actualThirdPlacers } = useMemo(
+    () => actualGroups ? getQualifiedTeams(actualGroups) : { groupQualifiers: [], thirdPlacers: [] },
+    [actualGroups],
+  );
+
+  const resolveActual = useCallback(
+    (defs: MatchDef[]) =>
+      actualGroups
+        ? [...defs]
+            .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
+            .map(def => resolveBracketMatch(def, actualQualifiers, actualThirdPlacers, actualKnockoutResults ?? {}))
+        : undefined,
+    [actualGroups, actualQualifiers, actualThirdPlacers, actualKnockoutResults],
+  );
+
   const r32        = useMemo(() => resolve(R32),         [resolve]);
   const r16        = useMemo(() => resolve(R16),         [resolve]);
   const qf         = useMemo(() => resolve(QF),          [resolve]);
   const sf         = useMemo(() => resolve(SF),          [resolve]);
   const thirdPlace = useMemo(() => resolve(THIRD_PLACE), [resolve]);
   const fin        = useMemo(() => resolve(FINAL),       [resolve]);
+
+  useEffect(() => {
+    if (!onFinalWinner || fin.length === 0) return;
+    onFinalWinner(getWinner(fin[0], results));
+  }, [fin, results, onFinalWinner]);
+
+  const ar32        = useMemo(() => resolveActual(R32),         [resolveActual]);
+  const ar16        = useMemo(() => resolveActual(R16),         [resolveActual]);
+  const aqf         = useMemo(() => resolveActual(QF),          [resolveActual]);
+  const asf         = useMemo(() => resolveActual(SF),          [resolveActual]);
+  const athirdPlace = useMemo(() => resolveActual(THIRD_PLACE), [resolveActual]);
+  const afin        = useMemo(() => resolveActual(FINAL),       [resolveActual]);
 
   const handleScore = useCallback((matchId: number, home: number | null, away: number | null) => {
     onKnockoutResultsChange(prev => {
@@ -324,7 +391,7 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
     });
   }, [onKnockoutResultsChange]);
 
-  const common = { locked, results, onScore: handleScore, onPenalty: handlePenalty };
+  const common = { locked, results, actualResults: actualKnockoutResults, onScore: handleScore, onPenalty: handlePenalty };
 
   return (
     <div className="knockout-stage bk">
@@ -337,12 +404,12 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
         </p>
       </div>
 
-      <Round label="Round of 32"    subtitle="16 matches" matches={r32}        {...common} />
-      <Round label="Round of 16"    subtitle="8 matches"  matches={r16}        {...common} />
-      <Round label="Quarter-finals" subtitle="4 matches"  matches={qf}         {...common} />
-      <Round label="Semi-finals"    subtitle="2 matches"  matches={sf}         {...common} />
-      <Round label="3rd Place"      subtitle=""           matches={thirdPlace} single {...common} />
-      <Round label="Final"          subtitle=""           matches={fin}        single {...common} />
+      <Round label="Round of 32"    subtitle="16 matches" matches={r32}        actualMatches={ar32}        {...common} />
+      <Round label="Round of 16"    subtitle="8 matches"  matches={r16}        actualMatches={ar16}        {...common} />
+      <Round label="Quarter-finals" subtitle="4 matches"  matches={qf}         actualMatches={aqf}         {...common} />
+      <Round label="Semi-finals"    subtitle="2 matches"  matches={sf}         actualMatches={asf}         {...common} />
+      <Round label="3rd Place"      subtitle=""           matches={thirdPlace} actualMatches={athirdPlace} single {...common} />
+      <Round label="Final"          subtitle=""           matches={fin}        actualMatches={afin}        single {...common} />
     </div>
   );
 }

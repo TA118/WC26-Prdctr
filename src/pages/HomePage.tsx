@@ -22,8 +22,8 @@ export function HomePage() {
         <button className="home-card home-card--prediction" onClick={() => navigate('/prediction')}>
           <div className="home-card-icon">🎯</div>
           <div className="home-card-body">
-            <h2>Prediction Game</h2>
-            <p>Predict every match result before the tournament starts and earn points based on how accurate you are.</p>
+            <h2>Prediction Games</h2>
+            <p>Predict every match from the 2026 World Cup and compete against your friends to see who knows football best.</p>
           </div>
         </button>
       </div>
