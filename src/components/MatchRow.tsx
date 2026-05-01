@@ -40,6 +40,21 @@ export function MatchRow({ match, teams, locked = false, actualHomeScore, actual
     onScoreChange(match.id, validH ? hs : null, validA ? as_ : null);
   }, [homeVal, awayVal]);
 
+  const homeRef = useRef<HTMLInputElement>(null);
+  const awayRef = useRef<HTMLInputElement>(null);
+
+  function advanceFromHome(val: string) {
+    if (val.length === 1 && /^\d$/.test(val)) awayRef.current?.focus();
+  }
+
+  function advanceFromAway(val: string) {
+    if (val.length === 1 && /^\d$/.test(val)) {
+      const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="number"]:not(:disabled)'));
+      const idx = inputs.indexOf(awayRef.current!);
+      if (idx >= 0 && inputs[idx + 1]) inputs[idx + 1].focus();
+    }
+  }
+
   const played = homeVal !== '' && awayVal !== '';
   const schedule = GROUP_SCHEDULE[match.id];
 
@@ -59,11 +74,12 @@ export function MatchRow({ match, teams, locked = false, actualHomeScore, actual
         </span>
         <div className="score-inputs">
           <input
+            ref={homeRef}
             type="number"
             min="0"
             max="99"
             value={homeVal}
-            onChange={(e) => setHomeVal(e.target.value)}
+            onChange={(e) => { setHomeVal(e.target.value); advanceFromHome(e.target.value); }}
             placeholder="–"
             disabled={locked}
           />
@@ -71,11 +87,12 @@ export function MatchRow({ match, teams, locked = false, actualHomeScore, actual
           <span className="score-sep">:</span>
           {hasActual && <span className="actual-score">({actualAwayScore})</span>}
           <input
+            ref={awayRef}
             type="number"
             min="0"
             max="99"
             value={awayVal}
-            onChange={(e) => setAwayVal(e.target.value)}
+            onChange={(e) => { setAwayVal(e.target.value); advanceFromAway(e.target.value); }}
             placeholder="–"
             disabled={locked}
           />

@@ -140,23 +140,29 @@ export function FullPredictionPage() {
     []
   );
 
+  // Blocks auto-save until Supabase load is done (prevents overwriting cloud data with empty local state)
+  const cloudLoaded = useRef(false);
+
   // Load from Supabase when user logs in (overrides localStorage if cloud data exists)
   useEffect(() => {
-    if (!user) return;
+    if (!user) { cloudLoaded.current = true; return; }
+    cloudLoaded.current = false;
     supabase
       .from('full_predictions')
       .select('data')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (!data?.data) return;
-        const d = data.data;
-        if (d.groups) setGroups(d.groups);
-        if (d.allManualRankings) setAllManualRankings(d.allManualRankings);
-        if (d.knockoutResults) setKnockoutResults(d.knockoutResults);
-        if (d.thirdPlaceRankings) setThirdPlaceRankings(d.thirdPlaceRankings);
-        if (d.goldenBoot) setGoldenBoot(d.goldenBoot);
-        if (d.predWinner) setPredWinner(d.predWinner);
+        if (data?.data) {
+          const d = data.data;
+          if (d.groups) setGroups(d.groups);
+          if (d.allManualRankings) setAllManualRankings(d.allManualRankings);
+          if (d.knockoutResults) setKnockoutResults(d.knockoutResults);
+          if (d.thirdPlaceRankings) setThirdPlaceRankings(d.thirdPlaceRankings);
+          if (d.goldenBoot) setGoldenBoot(d.goldenBoot);
+          if (d.predWinner) setPredWinner(d.predWinner);
+        }
+        cloudLoaded.current = true;
       });
   }, [user]);
 
@@ -165,6 +171,7 @@ export function FullPredictionPage() {
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
     const t = setTimeout(() => {
+      if (!cloudLoaded.current) return; // wait for Supabase load before saving
       const payload = { groups, allManualRankings, knockoutResults, thirdPlaceRankings, goldenBoot, predWinner };
       try {
         localStorage.setItem(PRED_KEY, JSON.stringify(payload));
