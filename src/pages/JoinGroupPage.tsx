@@ -48,7 +48,7 @@ export function JoinGroupPage() {
       .single();
 
     if (!group) { setError('Group not found.'); setLoading(false); return; }
-    if (group.invite_password !== password.trim()) {
+    if (group.invite_password !== password.trim().toLowerCase()) {
       setError('Wrong password. Try again.');
       setLoading(false); return;
     }

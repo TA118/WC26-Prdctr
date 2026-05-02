@@ -167,7 +167,7 @@ function CreateJoinModal({
 
   async function handleCreate() {
     const name = groupName.trim();
-    const pass = groupPassword.trim();
+    const pass = groupPassword.trim().toLowerCase();
     if (!name || !pass) return;
     setError(''); setLoading(true);
 
@@ -192,7 +192,7 @@ function CreateJoinModal({
   }
 
   async function handleJoin() {
-    const pass = joinPassword.trim();
+    const pass = joinPassword.trim().toLowerCase();
     if (!pass) return;
     setError(''); setLoading(true);
 
