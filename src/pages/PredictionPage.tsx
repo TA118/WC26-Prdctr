@@ -71,11 +71,11 @@ export function PredictionPage() {
           </div>
         </button>
 
-        <button className="home-card home-card--live" disabled>
+        <button className="home-card home-card--live" onClick={() => navigate('/prediction/live')}>
           <div className="home-card-icon">📡</div>
           <div className="home-card-body">
-            <h2>Live WC Prediction</h2>
-            <p>Coming soon — predict match by match as the tournament unfolds in real time.</p>
+            <h2>Live WC Predictions</h2>
+            <p>Predict match by match as the tournament unfolds in real time.</p>
           </div>
         </button>
       </div>

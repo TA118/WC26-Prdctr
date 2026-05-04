@@ -15,7 +15,7 @@ export function HomePage() {
           <div className="home-card-icon">🏟️</div>
           <div className="home-card-body">
             <h2>WC 2026 Simulator</h2>
-            <p>Simulate the entire tournament — fill in group stage results and watch the bracket resolve automatically.</p>
+            <p>Simulate the entire tournament - fill in group stage results and watch the bracket resolve automatically.</p>
           </div>
         </button>
 

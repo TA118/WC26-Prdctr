@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { syncAndFetchResults, buildActualGroups } from '../lib/actualResults';
+import type { MatchResult } from '../lib/actualResults';
+import { totalGroupScore, groupMatchColor } from '../logic/predictionScoring';
+import { INITIAL_GROUPS } from '../data/groups';
+import type { Group } from '../types';
 
 interface Member {
   userId: string;
@@ -9,9 +14,34 @@ interface Member {
   points: number;
   predWinner: { name: string; flag: string } | null;
   goldenBoot: { name: string } | null;
+  predGroups: Group[];
 }
 
 const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+const LIVE_STATUSES = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'live', 'Live', 'LIVE']);
+
+function buildMatchInfoMap(): Record<string, { home: string; away: string }> {
+  const map: Record<string, { home: string; away: string }> = {};
+  for (const group of INITIAL_GROUPS) {
+    for (const match of group.matches) {
+      const homeTeam = group.teams.find(t => t.id === match.homeTeamId);
+      const awayTeam = group.teams.find(t => t.id === match.awayTeamId);
+      if (homeTeam && awayTeam) map[match.id] = { home: homeTeam.name, away: awayTeam.name };
+    }
+  }
+  return map;
+}
+
+const MATCH_INFO = buildMatchInfoMap();
+
+function getUserPredForMatch(predGroups: Group[], matchId: string) {
+  for (const g of predGroups) {
+    const m = g.matches.find(m => m.id === matchId);
+    if (m && m.homeScore !== null && m.awayScore !== null) return { home: m.homeScore, away: m.awayScore };
+  }
+  return null;
+}
 
 export function GroupLeaderboardPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -21,8 +51,15 @@ export function GroupLeaderboardPage() {
   const [invitePassword, setInvitePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
+  const [liveMatches, setLiveMatches] = useState<MatchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  const rawRef = useRef<{
+    userIds: string[];
+    profileMap: Record<string, string>;
+    predMap: Record<string, any>;
+  } | null>(null);
 
   function copyInviteLink() {
     const link = `${window.location.origin}/prediction/full/groups/join/${groupId}`;
@@ -33,6 +70,31 @@ export function GroupLeaderboardPage() {
   }
 
   const isPastDeadline = Date.now() >= new Date('2026-06-11T19:00:00Z').getTime();
+
+  const applyResults = useCallback((results: MatchResult[]) => {
+    if (!rawRef.current) return;
+    const { userIds, profileMap, predMap } = rawRef.current;
+    const actualGroups = buildActualGroups(results);
+    const hasResults = results.length > 0;
+    const live = results.filter(r => LIVE_STATUSES.has(r.status));
+
+    const built: Member[] = userIds.map((uid: string) => {
+      const pred = predMap[uid];
+      const predGroups: Group[] = pred?.groups ?? INITIAL_GROUPS;
+      const points = hasResults ? totalGroupScore(predGroups, actualGroups) : 0;
+      return {
+        userId: uid,
+        username: profileMap[uid] ?? 'Unknown',
+        points,
+        predWinner: pred?.predWinner ? { name: pred.predWinner.name, flag: pred.predWinner.flag ?? '' } : null,
+        goldenBoot: pred?.goldenBoot ? { name: pred.goldenBoot.name } : null,
+        predGroups,
+      };
+    });
+    built.sort((a, b) => b.points - a.points);
+    setMembers(built);
+    setLiveMatches(live);
+  }, []);
 
   useEffect(() => {
     if (!groupId) return;
@@ -56,9 +118,10 @@ export function GroupLeaderboardPage() {
 
       const userIds = memberRows.map((m: any) => m.user_id);
 
-      const [{ data: profileRows }, { data: predRows }] = await Promise.all([
+      const [{ data: profileRows }, { data: predRows }, { results: actualResults }] = await Promise.all([
         supabase.from('profiles').select('id, username').in('id', userIds),
         supabase.from('full_predictions').select('user_id, data').in('user_id', userIds),
+        syncAndFetchResults(),
       ]);
 
       const profileMap: Record<string, string> = {};
@@ -67,27 +130,21 @@ export function GroupLeaderboardPage() {
       const predMap: Record<string, any> = {};
       predRows?.forEach((p: any) => { predMap[p.user_id] = p.data; });
 
-      const built: Member[] = userIds.map((uid: string) => {
-        const pred = predMap[uid];
-        return {
-          userId: uid,
-          username: profileMap[uid] ?? 'Unknown',
-          points: 0,
-          predWinner: pred?.predWinner
-            ? { name: pred.predWinner.name, flag: pred.predWinner.flag ?? '' }
-            : null,
-          goldenBoot: pred?.goldenBoot
-            ? { name: pred.goldenBoot.name }
-            : null,
-        };
-      });
-
-      built.sort((a, b) => b.points - a.points);
-      setMembers(built);
+      rawRef.current = { userIds, profileMap, predMap };
+      applyResults(actualResults);
       setLoading(false);
     }
     load();
-  }, [groupId, user, isPastDeadline]);
+  }, [groupId, user, isPastDeadline, applyResults]);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const interval = setInterval(async () => {
+      const { results } = await syncAndFetchResults();
+      applyResults(results);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [groupId, applyResults]);
 
   return (
     <div className="gl-page">
@@ -124,6 +181,16 @@ export function GroupLeaderboardPage() {
                 <th className="gl-th gl-th--rank">#</th>
                 <th className="gl-th gl-th--name">Username</th>
                 <th className="gl-th gl-th--pts">Pts</th>
+                {liveMatches.map(lm => {
+                  const info = MATCH_INFO[lm.match_id];
+                  return info ? (
+                    <th key={lm.match_id} className="gl-th gl-th--live">
+                      <div className="gl-live-badge">🔴 LIVE</div>
+                      <div className="gl-live-teams">{info.home} vs {info.away}</div>
+                      <div className="gl-live-score">{lm.home_score} - {lm.away_score}</div>
+                    </th>
+                  ) : null;
+                })}
                 <th className="gl-th gl-th--winner">Predicted Winner</th>
                 <th className="gl-th gl-th--gb">Top Scorer</th>
               </tr>
@@ -139,14 +206,29 @@ export function GroupLeaderboardPage() {
                     onClick={() => navigate(`/prediction/full/groups/${groupId}/member/${m.userId}`)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <td className="gl-td gl-td--rank">
-                      {RANK_MEDAL[rank] ?? rank}
-                    </td>
+                    <td className="gl-td gl-td--rank">{RANK_MEDAL[rank] ?? rank}</td>
                     <td className="gl-td gl-td--name">
                       {m.username}
                       {isMe && <span className="gl-you-badge">you</span>}
                     </td>
                     <td className="gl-td gl-td--pts">{m.points}</td>
+                    {liveMatches.map(lm => {
+                      const pred = getUserPredForMatch(m.predGroups, lm.match_id);
+                      const color = pred
+                        ? groupMatchColor(pred.home, pred.away, lm.home_score, lm.away_score)
+                        : null;
+                      return (
+                        <td key={lm.match_id} className="gl-td gl-td--live">
+                          {pred ? (
+                            <span className={`gl-live-pred gl-live-pred--${color ?? 'none'}`}>
+                              {pred.home}-{pred.away}
+                            </span>
+                          ) : (
+                            <span className="gl-empty-cell">-</span>
+                          )}
+                        </td>
+                      );
+                    })}
                     <td className="gl-td gl-td--winner">
                       {m.predWinner
                         ? <span>{m.predWinner.flag} {m.predWinner.name}</span>

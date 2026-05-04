@@ -43,7 +43,7 @@ function getUserPredForMatch(predGroups: Group[], matchId: string) {
   return null;
 }
 
-export function GlobalLeaderboardPage() {
+export function LiveGlobalLeaderboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -80,7 +80,7 @@ export function GlobalLeaderboardPage() {
     async function load() {
       const [{ results: actualResults }, { data: predRows }] = await Promise.all([
         syncAndFetchResults(),
-        supabase.from('full_predictions').select('user_id, data'),
+        supabase.from('live_predictions').select('user_id, data'),
       ]);
 
       if (!predRows || predRows.length === 0) { setLoading(false); return; }
@@ -112,7 +112,7 @@ export function GlobalLeaderboardPage() {
 
   return (
     <div className="gl-page">
-      <button className="back-btn gl-back" onClick={() => navigate('/prediction/full/groups')}>← Back</button>
+      <button className="back-btn gl-back" onClick={() => navigate('/prediction/live/groups')}>← Back</button>
 
       <div className="gl-header">
         <h1 className="gl-title">
@@ -123,7 +123,7 @@ export function GlobalLeaderboardPage() {
             </span>
           )}
         </h1>
-        <p className="gl-global-sub">Everyone who has made a prediction</p>
+        <p className="gl-global-sub">Everyone who has made a live prediction</p>
       </div>
 
       {loading ? (

@@ -8,6 +8,7 @@ interface Props {
   matches: Match[];
   teams: Team[];
   locked?: boolean;
+  matchLocks?: Record<string, boolean>;
   actualScores?: Record<string, ActualScore>;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
 }
@@ -15,10 +16,10 @@ interface Props {
 const ROUND_LABEL: Record<number, string> = {
   1: 'Matchday 1',
   2: 'Matchday 2',
-  3: 'Matchday 3 — Simultaneous',
+  3: 'Matchday 3 - Simultaneous',
 };
 
-export function MatchList({ matches, teams, locked = false, actualScores, onScoreChange }: Props) {
+export function MatchList({ matches, teams, locked = false, matchLocks, actualScores, onScoreChange }: Props) {
   const rounds = [1, 2, 3] as const;
 
   return (
@@ -39,7 +40,7 @@ export function MatchList({ matches, teams, locked = false, actualScores, onScor
                 key={match.id}
                 match={match}
                 teams={teams}
-                locked={locked}
+                locked={matchLocks ? (matchLocks[match.id] ?? locked) : locked}
                 actualHomeScore={actualScores?.[match.id]?.homeScore}
                 actualAwayScore={actualScores?.[match.id]?.awayScore}
                 onScoreChange={onScoreChange}

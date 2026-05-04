@@ -10,22 +10,23 @@ interface Props {
   manualRankings: ManualRankings;
   qualifyingThirdIds: Set<string>;
   locked?: boolean;
+  matchLocks?: Record<string, boolean>;
   actualGroup?: Group;
   useActualForStandings?: boolean;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
   onManualRankingsChange: (rankings: ManualRankings) => void;
 }
 
-export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = false, actualGroup, useActualForStandings = false, onScoreChange, onManualRankingsChange }: Props) {
+export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = false, matchLocks, actualGroup, useActualForStandings = false, onScoreChange, onManualRankingsChange }: Props) {
   const standingsMatches = useActualForStandings && actualGroup ? actualGroup.matches : group.matches;
   const allPlayed = standingsMatches.every(m => m.homeScore !== null && m.awayScore !== null);
   const playedCount = standingsMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
 
   const { standings, unresolvedGroups } = useMemo(() => {
     const raw = computeStandings(group.teams, standingsMatches);
-    const withManual = applyManualRankings(raw, manualRankings);
+    const withManual = applyManualRankings(raw, manualRankings, standingsMatches);
     const unresolved = allPlayed
-      ? getTiedGroups(raw).filter(g => !g.every(id => manualRankings[id] !== undefined))
+      ? getTiedGroups(raw, standingsMatches).filter(g => !g.every(id => manualRankings[id] !== undefined))
       : [];
     return { standings: withManual, unresolvedGroups: unresolved };
   }, [group.teams, standingsMatches, manualRankings, allPlayed]);
@@ -44,6 +45,7 @@ export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = 
         matches={group.matches}
         teams={group.teams}
         locked={locked}
+        matchLocks={matchLocks}
         actualScores={actualGroup && Object.fromEntries(
           actualGroup.matches.map(m => [m.id, { homeScore: m.homeScore, awayScore: m.awayScore }])
         )}

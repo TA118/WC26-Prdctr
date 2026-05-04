@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { syncAndFetchResults, buildActualGroups } from '../lib/actualResults';
@@ -43,31 +43,49 @@ function getUserPredForMatch(predGroups: Group[], matchId: string) {
   return null;
 }
 
-export function GlobalLeaderboardPage() {
+export function LiveGroupLeaderboardPage() {
+  const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [groupName, setGroupName] = useState('');
+  const [invitePassword, setInvitePassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [liveMatches, setLiveMatches] = useState<MatchResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-  const rawRef = useRef<{ predRows: any[] } | null>(null);
+  const rawRef = useRef<{
+    userIds: string[];
+    profileMap: Record<string, string>;
+    predMap: Record<string, any>;
+  } | null>(null);
+
+  function copyInviteLink() {
+    const link = `${window.location.origin}/prediction/live/groups/join/${groupId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const applyResults = useCallback((results: MatchResult[]) => {
     if (!rawRef.current) return;
-    const { predRows } = rawRef.current;
+    const { userIds, profileMap, predMap } = rawRef.current;
     const actualGroups = buildActualGroups(results);
     const hasResults = results.length > 0;
     const live = results.filter(r => LIVE_STATUSES.has(r.status));
 
-    const built: Member[] = predRows.map((p: any) => {
-      const predGroups: Group[] = p.data?.groups ?? INITIAL_GROUPS;
+    const built: Member[] = userIds.map((uid: string) => {
+      const pred = predMap[uid];
+      const predGroups: Group[] = pred?.groups ?? INITIAL_GROUPS;
       const points = hasResults ? totalGroupScore(predGroups, actualGroups) : 0;
       return {
-        userId: p.user_id,
-        username: p.username ?? 'Unknown',
+        userId: uid,
+        username: profileMap[uid] ?? 'Unknown',
         points,
-        predWinner: p.data?.predWinner ? { name: p.data.predWinner.name, flag: p.data.predWinner.flag ?? '' } : null,
-        goldenBoot: p.data?.goldenBoot ? { name: p.data.goldenBoot.name } : null,
+        predWinner: pred?.predWinner ? { name: pred.predWinner.name, flag: pred.predWinner.flag ?? '' } : null,
+        goldenBoot: pred?.goldenBoot ? { name: pred.goldenBoot.name } : null,
         predGroups,
       };
     });
@@ -77,59 +95,82 @@ export function GlobalLeaderboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!groupId) return;
     async function load() {
-      const [{ results: actualResults }, { data: predRows }] = await Promise.all([
+      const { data: group } = await supabase
+        .from('live_prediction_groups')
+        .select('name, invite_password')
+        .eq('id', groupId)
+        .single();
+      if (group) {
+        setGroupName(group.name);
+        setInvitePassword(group.invite_password);
+      }
+
+      const { data: memberRows } = await supabase
+        .from('live_group_members')
+        .select('user_id')
+        .eq('group_id', groupId);
+
+      if (!memberRows || memberRows.length === 0) { setLoading(false); return; }
+
+      const userIds = memberRows.map((m: any) => m.user_id);
+
+      const [{ data: profileRows }, { data: predRows }, { results: actualResults }] = await Promise.all([
+        supabase.from('profiles').select('id, username').in('id', userIds),
+        supabase.from('live_predictions').select('user_id, data').in('user_id', userIds),
         syncAndFetchResults(),
-        supabase.from('full_predictions').select('user_id, data'),
       ]);
-
-      if (!predRows || predRows.length === 0) { setLoading(false); return; }
-
-      const userIds = predRows.map((p: any) => p.user_id);
-      const { data: profileRows } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .in('id', userIds);
 
       const profileMap: Record<string, string> = {};
       profileRows?.forEach((p: any) => { profileMap[p.id] = p.username; });
 
-      const enriched = predRows.map((p: any) => ({ ...p, username: profileMap[p.user_id] }));
-      rawRef.current = { predRows: enriched };
+      const predMap: Record<string, any> = {};
+      predRows?.forEach((p: any) => { predMap[p.user_id] = p.data; });
+
+      rawRef.current = { userIds, profileMap, predMap };
       applyResults(actualResults);
       setLoading(false);
     }
     load();
-  }, [applyResults]);
+  }, [groupId, user, applyResults]);
 
   useEffect(() => {
+    if (!groupId) return;
     const interval = setInterval(async () => {
       const { results } = await syncAndFetchResults();
       applyResults(results);
     }, 30_000);
     return () => clearInterval(interval);
-  }, [applyResults]);
+  }, [groupId, applyResults]);
 
   return (
     <div className="gl-page">
-      <button className="back-btn gl-back" onClick={() => navigate('/prediction/full/groups')}>← Back</button>
+      <button className="back-btn gl-back" onClick={() => navigate('/prediction/live/groups')}>← Back</button>
 
       <div className="gl-header">
         <h1 className="gl-title">
-          🌍 Global Leaderboard
-          {!loading && (
-            <span className="gl-member-count">
-              {members.length} {members.length === 1 ? 'member' : 'members'}
-            </span>
-          )}
+          👥 {groupName || '…'}
+          {!loading && <span className="gl-member-count">{members.length} {members.length === 1 ? 'member' : 'members'}</span>}
         </h1>
-        <p className="gl-global-sub">Everyone who has made a prediction</p>
+        <button className="gl-invite-link-btn" onClick={copyInviteLink}>
+          {copied ? '✅ Link copied!' : '🔗 Invite friends to this group'}
+        </button>
+        <div className="gl-invite">
+          <span className="gl-invite-label">Group password:</span>
+          <span className="gl-invite-value">
+            {showPassword ? invitePassword : '••••••'}
+          </span>
+          <button className="gl-invite-toggle" onClick={() => setShowPassword(v => !v)}>
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <p className="gl-empty">Loading…</p>
       ) : members.length === 0 ? (
-        <p className="gl-empty">No predictions yet.</p>
+        <p className="gl-empty">No members yet.</p>
       ) : (
         <div className="gl-table-wrap">
           <table className="gl-table">
@@ -157,7 +198,10 @@ export function GlobalLeaderboardPage() {
                 const rank = i + 1;
                 const isMe = m.userId === user?.id;
                 return (
-                  <tr key={m.userId} className={`gl-tr${isMe ? ' gl-tr--me' : ''}`}>
+                  <tr
+                    key={m.userId}
+                    className={`gl-tr${isMe ? ' gl-tr--me' : ''}`}
+                  >
                     <td className="gl-td gl-td--rank">{RANK_MEDAL[rank] ?? rank}</td>
                     <td className="gl-td gl-td--name">
                       {m.username}

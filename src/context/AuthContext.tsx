@@ -41,7 +41,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('username')
       .eq('id', userId)
       .single();
-    setUsername(data?.username ?? null);
+
+    if (data?.username) {
+      setUsername(data.username);
+      setLoading(false);
+      return;
+    }
+
+    // Profile missing (signup upsert failed before email verification) — create it now
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const derivedUsername =
+      authUser?.user_metadata?.username ??
+      authUser?.email?.split('@')[0] ??
+      'user';
+    const derivedEmail = authUser?.email ?? '';
+    await supabase.from('profiles').upsert({
+      id: userId,
+      username: derivedUsername,
+      email: derivedEmail,
+    });
+    setUsername(derivedUsername);
     setLoading(false);
   }
 

@@ -49,13 +49,15 @@ const ROUND_POINTS: Record<string, [number, number, number, number]> = {
   r16:   [4, 4, 3, 2], // exact score adds +2 on top of exactMatchup+winner (handled separately)
   qf:    [5, 5, 4, 3],
   sf:    [7, 7, 5, 4],
+  third: [7, 7, 5, 4], // same as semi-finals
   final: [12, 12, 10, 0],
 };
 
 const ROUND_EXACT_SCORE_BONUS: Record<string, number> = {
-  r16: 2,   // 4+2 = 6
-  qf:  3,   // 5+3 = 8
-  sf:  3,   // 7+3 = 10
+  r16:   2, // 4+2 = 6
+  qf:    3, // 5+3 = 8
+  sf:    3, // 7+3 = 10
+  third: 3, // 7+3 = 10, same as semi-finals
   final: 8, // 12+8 = 20
 };
 
@@ -70,7 +72,7 @@ function matchWinnerId(
 }
 
 export interface KOMatchScoreInput {
-  round: 'r32' | 'r16' | 'qf' | 'sf' | 'final';
+  round: 'r32' | 'r16' | 'qf' | 'sf' | 'third' | 'final';
   predHomeId: string | null;
   predAwayId: string | null;
   predResult: { home: number | null; away: number | null; penaltyWinner: string | null } | undefined;

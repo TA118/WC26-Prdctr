@@ -40,7 +40,7 @@ const ROUNDS: RoundSection[] = [
     ],
   },
   {
-    round: 'Quarter-finals',
+    round: 'Quarter-Finals',
     rules: [
       { pts: 8, description: 'Exact matchup + exact score' },
       { pts: 5, description: 'Exact matchup + correct winner' },
@@ -50,7 +50,7 @@ const ROUNDS: RoundSection[] = [
     ],
   },
   {
-    round: 'Semi-finals',
+    round: 'Semi-Finals & 3rd Place Match',
     rules: [
       { pts: 10, description: 'Exact matchup + exact score' },
       { pts: 7, description: 'Exact matchup + correct winner' },
@@ -91,8 +91,8 @@ export function RulesPage() {
       </div>
 
       <div className="rules-note">
-        <strong>Knockout score clarification:</strong> "Exact score" means the final result after 120 minutes,
-        including the penalty shoot-out winner if you predicted it correctly.
+        <strong>Knockout score clarification:</strong> "Exact score" means the final result after 90/120 minutes,
+        plus the penalty shoot-out winner if you predicted it correctly.
       </div>
 
       <div className="rules-rounds">
@@ -119,7 +119,7 @@ export function RulesPage() {
           <tbody>
             <tr>
               <td className="rules-pts">10 pts</td>
-              <td className="rules-desc">Your predicted player wins the Golden Boot trophy (tournament top scorer) — awarded after the Final</td>
+              <td className="rules-desc">Your predicted player wins the Golden Boot trophy (tournament top scorer) - awarded after the Final</td>
             </tr>
             <tr>
               <td className="rules-pts rules-pts--zero">0 pts</td>
@@ -138,7 +138,7 @@ export function RulesPage() {
               <span className={`rules-color-dot rules-color-dot--${c.dot}`} />
               <div>
                 <span className="rules-color-label">{c.label}</span>
-                <span className="rules-color-desc"> — {c.desc}</span>
+                <span className="rules-color-desc"> - {c.desc}</span>
               </div>
             </div>
           ))}

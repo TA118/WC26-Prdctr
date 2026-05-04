@@ -51,7 +51,7 @@ export function AuthModal({ onClose }: Props) {
     setLoading(true);
     await supabase.auth.resetPasswordForEmail(email);
     setLoading(false);
-    setError('Password reset email sent — check your inbox.');
+    setError('Password reset email sent - check your inbox.');
   }
 
   return (

@@ -259,7 +259,7 @@ export function FullPredictionPage() {
 
       {isPastDeadline ? (
         <div className="deadline-banner deadline-banner--locked">
-          🔒 Predictions locked — tournament started
+          🔒 Predictions locked - tournament started
         </div>
       ) : (
         <div className="deadline-banner deadline-banner--open">
@@ -267,6 +267,26 @@ export function FullPredictionPage() {
           <span className="deadline-clock">{formatCountdown(msLeft)}</span>
         </div>
       )}
+
+      {/* Golden boot strip */}
+      <div className="gb-strip">
+        <button
+          className={`gb-strip-card${isPastDeadline ? ' gb-strip-card--locked' : ''}`}
+          onClick={() => !isPastDeadline && setShowGoldenBootModal(true)}
+        >
+          <div className="gb-strip-label">👟 Predicted Top Scorer</div>
+          {goldenBoot ? (
+            <div className="gb-strip-value">
+              <span className="flag">{goldenBoot.flag}</span>
+              {goldenBoot.name}
+              <span className="gb-strip-country">{goldenBoot.country}</span>
+            </div>
+          ) : (
+            <div className="gb-strip-value gb-strip-empty">Not chosen yet - tap to pick</div>
+          )}
+          {!isPastDeadline && goldenBoot && <div className="gb-strip-change">tap to change</div>}
+        </button>
+      </div>
 
       <nav className="group-tabs">
         {groups.map((g) => {

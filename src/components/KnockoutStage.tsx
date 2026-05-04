@@ -134,6 +134,47 @@ function resolveBracketMatch(
   };
 }
 
+// ─── Match card coloring ─────────────────────────────────────────────────────
+
+type MatchColor = 'green' | 'yellow' | 'purple' | 'red' | null;
+
+function koMatchColor(
+  result: KnockoutResult | undefined,
+  actualResult: KnockoutResult | undefined,
+  topTeamId: string | null,
+  actualTopTeamId: string | null,
+): MatchColor {
+  if (!result || result.home === null || result.away === null) return null;
+  if (!actualResult || actualResult.home === null || actualResult.away === null) return null;
+
+  const predWinSide = result.home > result.away ? 'top'
+    : result.away > result.home ? 'bottom'
+    : result.penaltyWinner ? (result.penaltyWinner === topTeamId ? 'top' : 'bottom') : null;
+
+  const actualWinSide = actualResult.home > actualResult.away ? 'top'
+    : actualResult.away > actualResult.home ? 'bottom'
+    : actualResult.penaltyWinner ? (actualResult.penaltyWinner === actualTopTeamId ? 'top' : 'bottom') : null;
+
+  if (predWinSide === null || actualWinSide === null) return null;
+  if (predWinSide !== actualWinSide) return 'red';
+
+  const exactScore = result.home === actualResult.home && result.away === actualResult.away;
+  const predHadPens = result.home === result.away;
+  const actualHadPens = actualResult.home === actualResult.away;
+  const penSituationCorrect = predHadPens === actualHadPens;
+
+  if (exactScore && penSituationCorrect) return 'green';
+  if (!penSituationCorrect) return 'purple';
+  return 'yellow';
+}
+
+const KO_COLOR_LABEL: Record<string, string> = {
+  green:  '✓ Perfect',
+  yellow: '✓ Correct winner',
+  purple: '⚠ Wrong penalty call',
+  red:    '✗ Wrong',
+};
+
 // ─── Match card ───────────────────────────────────────────────────────────────
 
 function MatchCard({
@@ -160,6 +201,8 @@ function MatchCard({
   const isDraw = home !== null && away !== null && home === away;
   const hasActualResult = actualResult !== undefined
     && actualResult.home !== null && actualResult.away !== null;
+
+  const color = koMatchColor(result, actualResult, match.top.team?.id ?? null, actualMatch?.top.team?.id ?? null);
 
   let winnerId: string | null = null;
   if (home !== null && away !== null) {
@@ -226,7 +269,7 @@ function MatchCard({
   };
 
   return (
-    <div className="bk-match">
+    <div className={`bk-match${color ? ` bk-match--${color}` : ''}`}>
       {renderRow(match.top, 'home')}
       {renderRow(match.bottom, 'away')}
       <div className="bk-match-meta">
@@ -245,7 +288,7 @@ function MatchCard({
       </div>
       {isDraw && (
         <div className="bk-penalty">
-          <div className="bk-penalty-q">Penalty shoot-out — who wins?</div>
+          <div className="bk-penalty-q">Penalty shoot-out - who wins?</div>
           <div className="bk-penalty-btns">
             {([match.top, match.bottom] as BracketTeam[]).map(bt => bt.team && (
               <button
@@ -258,6 +301,11 @@ function MatchCard({
               </button>
             ))}
           </div>
+        </div>
+      )}
+      {color && (
+        <div className={`bk-result-label bk-result-label--${color}`}>
+          {KO_COLOR_LABEL[color]}
         </div>
       )}
     </div>
@@ -400,7 +448,7 @@ export function KnockoutStage({ groups, knockoutResults: results, onKnockoutResu
         <p className="knockout-sub">
           {locked
             ? 'Complete all group stage matches to enter knockout results'
-            : 'Enter scores — winners advance automatically'}
+            : 'Enter scores - winners advance automatically'}
         </p>
       </div>
 
