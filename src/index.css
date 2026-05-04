@@ -114,6 +114,11 @@ body {
   color: #fca5a5;
 }
 
+.live-next-teams {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
 .home-card--simulator:hover:not(:disabled) { border-color: #3b82f6; }
 .home-card--prediction:hover:not(:disabled) { border-color: #f59e0b; }
 .home-card--live:hover:not(:disabled) { border-color: #10b981; }
