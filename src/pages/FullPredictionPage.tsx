@@ -243,7 +243,7 @@ export function FullPredictionPage() {
     <div className="app">
       <button className="home-nav-btn" onClick={() => navigate('/prediction/full')}>← Back</button>
       <header>
-        <h1>🎯 Full World Cup 2026 Prediction</h1>
+        <h1>🎯 Full World Cup 2026 Predictions</h1>
         <p className="subtitle">
           {activeTab === KO_TAB
             ? `Knockout Stage · ${koPredicted} / 32 predicted`
@@ -274,7 +274,7 @@ export function FullPredictionPage() {
           className={`gb-strip-card${isPastDeadline ? ' gb-strip-card--locked' : ''}`}
           onClick={() => !isPastDeadline && setShowGoldenBootModal(true)}
         >
-          <div className="gb-strip-label">👟 Predicted Top Scorer</div>
+          <div className="gb-strip-label">👟 Top Scorer</div>
           {goldenBoot ? (
             <div className="gb-strip-value">
               <span className="flag">{goldenBoot.flag}</span>
