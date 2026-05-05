@@ -236,7 +236,16 @@ export function LivePredictionPage() {
   const groupsRef = useRef(groups);
   groupsRef.current = groups;
 
-  const [activeTab, setActiveTab] = useState('A');
+  const [activeTab, setActiveTab] = useState(() => {
+    const now = Date.now();
+    let best: { matchId: string; kickoff: number } | null = null;
+    for (const [matchId, s] of Object.entries(GROUP_SCHEDULE)) {
+      const ko = new Date(s.kickoff).getTime();
+      if (ko <= now) continue;
+      if (!best || ko < best.kickoff) best = { matchId, kickoff: ko };
+    }
+    return best ? best.matchId.split('-')[0] : 'A';
+  });
   const [allManualRankings, setAllManualRankings] = useState<Record<string, ManualRankings>>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
