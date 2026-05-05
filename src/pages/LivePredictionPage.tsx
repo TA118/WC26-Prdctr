@@ -425,7 +425,7 @@ export function LivePredictionPage() {
       <button className="home-nav-btn" onClick={() => navigate('/prediction/live')}>← Back</button>
 
       <header>
-        <h1>📡 Live WC Predictions</h1>
+        <h1>📡 Live World Cup 2026 Predictions</h1>
         <p className="subtitle">
           {activeTab === KO_TAB
             ? `Knockout Stage · ${koPredicted} / 32 predicted`
