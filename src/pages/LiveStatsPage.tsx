@@ -76,6 +76,7 @@ function slotLabel(slot: SlotRef): string {
 interface UnifiedMatch {
   id: string;
   kickoff: string;
+  section: string;
   roundLabel: string;
   homeTeam: Team | null;
   awayTeam: Team | null;
@@ -101,6 +102,7 @@ function buildMatchList(actualGroups: Group[], actualKO: KnockoutResults): Unifi
       list.push({
         id: m.id,
         kickoff: sched?.kickoff ?? '',
+        section: 'Group Stage',
         roundLabel: `Group ${g.id} · Match ${idx + 1}`,
         homeTeam: g.teams.find(t => t.id === m.homeTeamId) ?? null,
         awayTeam: g.teams.find(t => t.id === m.awayTeamId) ?? null,
@@ -119,6 +121,7 @@ function buildMatchList(actualGroups: Group[], actualKO: KnockoutResults): Unifi
       const homeTeam = resolveTeam(m.top, m, actualGroups, actualKO, topEight);
       const awayTeam = resolveTeam(m.bottom, m, actualGroups, actualKO, topEight);
       list.push({
+        section: label,
         id: String(m.id),
         kickoff: m.kickoff,
         roundLabel: matchLabel,
@@ -289,9 +292,13 @@ function MatchesTab({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  let lastSection = '';
+
   return (
     <div className="lstats-matches">
       {matches.map(match => {
+        const showHeader = match.section !== lastSection;
+        lastSection = match.section;
         const ms = matchStats[match.id];
         const isLocked = match.kickoff ? Date.now() >= new Date(match.kickoff).getTime() : false;
         const hasPredictions = ms && ms.total > 0;
@@ -309,7 +316,13 @@ function MatchesTab({
           : [];
 
         return (
-          <div key={match.id} className="lstats-match-card">
+          <div key={match.id}>
+            {showHeader && (
+              <div className="lstats-section-header">
+                <span className="lstats-section-title">{match.section}</span>
+              </div>
+            )}
+          <div className="lstats-match-card">
             <div
               className={`lstats-match-header${isLocked && hasPredictions ? ' lstats-match-header--clickable' : ''}`}
               onClick={() => isLocked && hasPredictions && setExpandedId(isExpanded ? null : match.id)}
@@ -383,6 +396,7 @@ function MatchesTab({
                 </table>
               </div>
             )}
+          </div>
           </div>
         );
       })}

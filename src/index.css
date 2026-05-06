@@ -413,6 +413,28 @@ body {
 .lstats-match-expand-hint { font-size: 0.65rem; color: #3b82f6; margin-left: auto; flex-shrink: 0; }
 .lstats-match-pending { font-size: 0.75rem; color: #475569; font-style: italic; margin: 0; }
 .lstats-match-no-preds { font-size: 0.75rem; color: #334155; font-style: italic; margin: 0; }
+.lstats-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+.lstats-section-header:first-child { margin-top: 0; }
+.lstats-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  white-space: nowrap;
+}
+.lstats-section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #1e2d45;
+}
 
 /* Teams tab */
 .stats-teams-tab { width: 100%; display: flex; flex-direction: column; gap: 1.25rem; }
