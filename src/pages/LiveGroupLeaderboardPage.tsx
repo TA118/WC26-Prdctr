@@ -12,6 +12,7 @@ interface Member {
   userId: string;
   username: string;
   points: number;
+  perfectCount: number;
   predWinner: { name: string; flag: string } | null;
   goldenBoot: { name: string } | null;
   predGroups: Group[];
@@ -80,16 +81,30 @@ export function LiveGroupLeaderboardPage() {
       const pred = predMap[uid];
       const predGroups: Group[] = pred?.groups ?? INITIAL_GROUPS;
       const points = hasResults ? totalGroupScore(predGroups, actualGroups) : 0;
+      let perfectCount = 0;
+      if (hasResults) {
+        for (const pg of predGroups) {
+          const ag = actualGroups.find(g => g.id === pg.id);
+          if (!ag) continue;
+          for (const pm of pg.matches) {
+            if (pm.homeScore === null || pm.awayScore === null) continue;
+            const am = ag.matches.find(m => m.id === pm.id);
+            if (!am || am.homeScore === null || am.awayScore === null) continue;
+            if (pm.homeScore === am.homeScore && pm.awayScore === am.awayScore) perfectCount++;
+          }
+        }
+      }
       return {
         userId: uid,
         username: profileMap[uid] ?? 'Unknown',
         points,
+        perfectCount,
         predWinner: pred?.predWinner ? { name: pred.predWinner.name, flag: pred.predWinner.flag ?? '' } : null,
         goldenBoot: pred?.goldenBoot ? { name: pred.goldenBoot.name } : null,
         predGroups,
       };
     });
-    built.sort((a, b) => b.points - a.points);
+    built.sort((a, b) => b.points - a.points || b.perfectCount - a.perfectCount);
     setMembers(built);
     setLiveMatches(live);
   }, []);
@@ -201,6 +216,8 @@ export function LiveGroupLeaderboardPage() {
                   <tr
                     key={m.userId}
                     className={`gl-tr${isMe ? ' gl-tr--me' : ''}`}
+                    onClick={() => navigate(`/prediction/live/groups/${groupId}/member/${m.userId}`)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <td className="gl-td gl-td--rank">{RANK_MEDAL[rank] ?? rank}</td>
                     <td className="gl-td gl-td--name">

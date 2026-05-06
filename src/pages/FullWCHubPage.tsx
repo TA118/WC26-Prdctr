@@ -66,6 +66,14 @@ export function FullWCHubPage() {
           </div>
         </button>
 
+        <button className="home-card home-card--stats" onClick={() => navigate('/prediction/full/stats')}>
+          <div className="home-card-icon">📊</div>
+          <div className="home-card-body">
+            <h2>Predictions Stats</h2>
+            <p>See how everyone predicted the tournament - winners, top scorers, group standings and more.</p>
+          </div>
+        </button>
+
         <button className="home-card home-card--rules" onClick={() => navigate('/prediction/full/rules')}>
           <div className="home-card-icon">📖</div>
           <div className="home-card-body">

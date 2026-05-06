@@ -12,6 +12,7 @@ interface Member {
   userId: string;
   username: string;
   points: number;
+  perfectCount: number;
   predWinner: { name: string; flag: string } | null;
   goldenBoot: { name: string } | null;
   predGroups: Group[];
@@ -62,16 +63,30 @@ export function GlobalLeaderboardPage() {
     const built: Member[] = predRows.map((p: any) => {
       const predGroups: Group[] = p.data?.groups ?? INITIAL_GROUPS;
       const points = hasResults ? totalGroupScore(predGroups, actualGroups) : 0;
+      let perfectCount = 0;
+      if (hasResults) {
+        for (const pg of predGroups) {
+          const ag = actualGroups.find(g => g.id === pg.id);
+          if (!ag) continue;
+          for (const pm of pg.matches) {
+            if (pm.homeScore === null || pm.awayScore === null) continue;
+            const am = ag.matches.find(m => m.id === pm.id);
+            if (!am || am.homeScore === null || am.awayScore === null) continue;
+            if (pm.homeScore === am.homeScore && pm.awayScore === am.awayScore) perfectCount++;
+          }
+        }
+      }
       return {
         userId: p.user_id,
         username: p.username ?? 'Unknown',
         points,
+        perfectCount,
         predWinner: p.data?.predWinner ? { name: p.data.predWinner.name, flag: p.data.predWinner.flag ?? '' } : null,
         goldenBoot: p.data?.goldenBoot ? { name: p.data.goldenBoot.name } : null,
         predGroups,
       };
     });
-    built.sort((a, b) => b.points - a.points);
+    built.sort((a, b) => b.points - a.points || b.perfectCount - a.perfectCount);
     setMembers(built);
     setLiveMatches(live);
   }, []);

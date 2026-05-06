@@ -3,9 +3,10 @@ import { PLAYERS, type Player } from '../data/players';
 
 interface Props {
   onSelect: (player: Player) => void;
+  onDismiss?: () => void;
 }
 
-export function GoldenBootModal({ onSelect }: Props) {
+export function GoldenBootModal({ onSelect, onDismiss }: Props) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,8 +26,11 @@ export function GoldenBootModal({ onSelect }: Props) {
     : PLAYERS;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onDismiss?.()}>
       <div className="modal-box">
+        {onDismiss && (
+          <button className="modal-dismiss-btn" onClick={onDismiss}>✕</button>
+        )}
         <div className="modal-icon">🥇</div>
         <h2 className="modal-title">Golden Boot</h2>
         <p className="modal-subtitle">Who will score the most goals at World Cup 2026?</p>

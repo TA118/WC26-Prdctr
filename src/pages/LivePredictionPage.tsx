@@ -80,7 +80,7 @@ function WelcomeModal({ initialWinner, initialScorer, onSave, onLater }: Welcome
   const [scorerQuery, setScorerQuery] = useState('');
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onLater()}>
       <div className="modal-box live-welcome-modal">
         <div className="modal-icon">🏆</div>
         <h2 className="modal-title">Make Your Picks!</h2>

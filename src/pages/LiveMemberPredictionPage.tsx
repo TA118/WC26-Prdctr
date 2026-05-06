@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { syncAndFetchResults, buildActualGroups } from '../lib/actualResults';
+import { computeStandings } from '../logic/standings';
 import { INITIAL_GROUPS } from '../data/groups';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import type { Group } from '../types';
 
-// KO rounds estimated start dates (UTC)
 const KO_DATES: Record<string, string> = {
   R32: '2026-07-04T00:00:00Z',
   R16: '2026-07-09T00:00:00Z',
@@ -15,24 +15,40 @@ const KO_DATES: Record<string, string> = {
   F:   '2026-07-19T00:00:00Z',
 };
 
+const KO_ROUNDS = [
+  { label: 'Round of 32',    key: 'R32', ids: Array.from({ length: 16 }, (_, i) => i + 65) },
+  { label: 'Round of 16',    key: 'R16', ids: Array.from({ length: 8 },  (_, i) => i + 81) },
+  { label: 'Quarter-finals', key: 'QF',  ids: Array.from({ length: 4 },  (_, i) => i + 89) },
+  { label: 'Semi-finals',    key: 'SF',  ids: Array.from({ length: 2 },  (_, i) => i + 93) },
+  { label: 'Final',          key: 'F',   ids: [104] },
+];
+
 function isKickoffPassed(isoDate: string) {
   return Date.now() >= new Date(isoDate).getTime();
 }
 
-const KO_ROUNDS = [
-  { label: 'Round of 32', key: 'R32', ids: Array.from({ length: 16 }, (_, i) => i + 65) },
-  { label: 'Round of 16', key: 'R16', ids: Array.from({ length: 8 },  (_, i) => i + 81) },
-  { label: 'Quarter-finals', key: 'QF', ids: Array.from({ length: 4 }, (_, i) => i + 89) },
-  { label: 'Semi-finals', key: 'SF', ids: Array.from({ length: 2 }, (_, i) => i + 93) },
-  { label: 'Final',         key: 'F',  ids: [104] },
-];
+function isTeamEliminated(teamId: string, actualGroups: Group[]): boolean {
+  if (actualGroups.length === 0) return false;
+  for (const ag of actualGroups) {
+    const allPlayed = ag.matches.every(m => m.homeScore !== null && m.awayScore !== null);
+    if (!allPlayed) return false; // group not finished yet, can't tell
+    const standings = computeStandings(ag.teams, ag.matches);
+    if (standings.some(s => s.team.id === teamId)) {
+      // team is in this group — check if they finished top 2
+      const rank = standings.findIndex(s => s.team.id === teamId);
+      return rank >= 2; // 3rd or 4th = eliminated (simplified, ignores best 3rd)
+    }
+  }
+  return false;
+}
 
-export function MemberPredictionPage() {
+export function LiveMemberPredictionPage() {
   const { groupId, userId } = useParams<{ groupId: string; userId: string }>();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [predData, setPredData] = useState<any>(null);
   const [perfectCount, setPerfectCount] = useState(0);
+  const [winnerEliminated, setWinnerEliminated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('A');
 
@@ -40,7 +56,7 @@ export function MemberPredictionPage() {
     if (!userId) return;
     Promise.all([
       supabase.from('profiles').select('username').eq('id', userId).single(),
-      supabase.from('full_predictions').select('data').eq('user_id', userId).single(),
+      supabase.from('live_predictions').select('data').eq('user_id', userId).single(),
       syncAndFetchResults(),
     ]).then(([{ data: profile }, { data: pred }, { results }]) => {
       if (profile) setUsername(profile.username);
@@ -60,6 +76,9 @@ export function MemberPredictionPage() {
             }
           }
           setPerfectCount(count);
+          if (pred.data?.predWinner?.id) {
+            setWinnerEliminated(isTeamEliminated(pred.data.predWinner.id, actualGroups));
+          }
         }
       }
       setLoading(false);
@@ -68,7 +87,6 @@ export function MemberPredictionPage() {
 
   const groups: Group[] = predData?.groups ?? INITIAL_GROUPS;
   const koResults: Record<number, { home: number | null; away: number | null }> = predData?.knockoutResults ?? {};
-
   const GROUP_IDS = INITIAL_GROUPS.map(g => g.id);
   const activeGroup = groups.find(g => g.id === activeTab) ?? groups[0];
 
@@ -76,11 +94,20 @@ export function MemberPredictionPage() {
 
   return (
     <div className="mp-page">
-      <button className="back-btn mp-back" onClick={() => navigate(`/prediction/full/groups/${groupId}`)}>← Back</button>
+      <button className="back-btn mp-back" onClick={() => navigate(`/prediction/live/groups/${groupId}`)}>← Back</button>
 
       <div className="mp-header">
         <h1 className="mp-title">📋 {username}'s Predictions</h1>
         <div className="mp-stats-bar">
+          <div className={`mp-stat-card${winnerEliminated ? ' mp-stat-card--eliminated' : ''}`}>
+            <div className="mp-stat-label">🏆 Predicted Winner</div>
+            <div className="mp-stat-value">
+              {predData?.predWinner
+                ? <><span className="mp-stat-flag">{predData.predWinner.flag}</span>{predData.predWinner.name}</>
+                : <span className="mp-stat-empty">Not chosen</span>}
+            </div>
+            {winnerEliminated && <div className="mp-stat-eliminated">Eliminated</div>}
+          </div>
           <div className="mp-stat-card">
             <div className="mp-stat-label">👟 Top Scorer</div>
             <div className="mp-stat-value">
@@ -96,7 +123,6 @@ export function MemberPredictionPage() {
         </div>
       </div>
 
-      {/* Group stage tabs */}
       <div className="mp-tabs">
         {GROUP_IDS.map(gid => (
           <button
@@ -124,7 +150,6 @@ export function MemberPredictionPage() {
             const away = activeGroup.teams.find(t => t.id === match.awayTeamId);
             const hScore = closed ? match.homeScore : null;
             const aScore = closed ? match.awayScore : null;
-
             return (
               <div key={match.id} className="mp-match">
                 <span className="mp-team mp-team--home">{home?.flag} {home?.name}</span>
@@ -150,17 +175,13 @@ export function MemberPredictionPage() {
                   const closed = roundOpen && result;
                   return (
                     <div key={id} className="mp-match mp-match--ko">
-                      <span className="mp-team mp-team--home">
-                        {closed ? `TBD` : '?'}
-                      </span>
+                      <span className="mp-team mp-team--home">{closed ? 'TBD' : '?'}</span>
                       <span className="mp-score">
                         {closed && result.home !== null && result.away !== null
                           ? `${result.home} – ${result.away}`
                           : '? – ?'}
                       </span>
-                      <span className="mp-team mp-team--away">
-                        {closed ? `TBD` : '?'}
-                      </span>
+                      <span className="mp-team mp-team--away">{closed ? 'TBD' : '?'}</span>
                     </div>
                   );
                 })}

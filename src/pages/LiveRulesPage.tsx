@@ -114,6 +114,13 @@ export function LiveRulesPage() {
           </tbody>
         </table>
       </div>
+      <div className="rules-round rules-tiebreaker">
+        <h2 className="rules-round-title">⚖️ Tiebreaker</h2>
+        <p className="rules-tiebreaker-desc">
+          If two or more players have the same total points in the leaderboard, the player with more
+          <strong> exact score predictions</strong> ranks higher.
+        </p>
+      </div>
     </div>
   );
 }

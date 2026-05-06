@@ -380,7 +380,7 @@ export function FullPredictionPage() {
       )}
 
       {showGoldenBootModal && (
-        <GoldenBootModal onSelect={handleGoldenBootSelect} />
+        <GoldenBootModal onSelect={handleGoldenBootSelect} onDismiss={() => setShowGoldenBootModal(false)} />
       )}
     </div>
   );
