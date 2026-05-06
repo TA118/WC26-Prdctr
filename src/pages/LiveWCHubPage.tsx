@@ -29,6 +29,14 @@ export function LiveWCHubPage() {
           </div>
         </button>
 
+        <button className="home-card home-card--stats" onClick={() => navigate('/prediction/live/stats')}>
+          <div className="home-card-icon">📊</div>
+          <div className="home-card-body">
+            <h2>Predictions Stats</h2>
+            <p>See how everyone is predicting each match — winner picks, top scorer, and score distributions.</p>
+          </div>
+        </button>
+
         <button className="home-card home-card--rules" onClick={() => navigate('/prediction/live/rules')}>
           <div className="home-card-icon">📖</div>
           <div className="home-card-body">

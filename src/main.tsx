@@ -13,6 +13,7 @@ import { GroupLeaderboardPage } from './pages/GroupLeaderboardPage.tsx';
 import { JoinGroupPage } from './pages/JoinGroupPage.tsx';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage.tsx';
 import { MemberPredictionPage } from './pages/MemberPredictionPage.tsx';
+import { FullStatsPage } from './pages/FullStatsPage.tsx';
 import { LiveWCHubPage } from './pages/LiveWCHubPage.tsx';
 import { LivePredictionPage } from './pages/LivePredictionPage.tsx';
 import { LiveRulesPage } from './pages/LiveRulesPage.tsx';
@@ -20,6 +21,8 @@ import { LiveMyGroupsPage } from './pages/LiveMyGroupsPage.tsx';
 import { LiveGroupLeaderboardPage } from './pages/LiveGroupLeaderboardPage.tsx';
 import { LiveJoinGroupPage } from './pages/LiveJoinGroupPage.tsx';
 import { LiveGlobalLeaderboardPage } from './pages/LiveGlobalLeaderboardPage.tsx';
+import { LiveMemberPredictionPage } from './pages/LiveMemberPredictionPage.tsx';
+import { LiveStatsPage } from './pages/LiveStatsPage.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
@@ -37,6 +40,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/prediction/full/groups/:groupId" element={<GroupLeaderboardPage />} />
         <Route path="/prediction/full/groups/join/:groupId" element={<JoinGroupPage />} />
         <Route path="/prediction/full/groups/global" element={<GlobalLeaderboardPage />} />
+        <Route path="/prediction/full/stats" element={<FullStatsPage />} />
         <Route path="/prediction/full/groups/:groupId/member/:userId" element={<MemberPredictionPage />} />
         <Route path="/prediction/live" element={<LiveWCHubPage />} />
         <Route path="/prediction/live/predict" element={<LivePredictionPage />} />
@@ -45,6 +49,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/prediction/live/groups/global" element={<LiveGlobalLeaderboardPage />} />
         <Route path="/prediction/live/groups/join/:groupId" element={<LiveJoinGroupPage />} />
         <Route path="/prediction/live/groups/:groupId" element={<LiveGroupLeaderboardPage />} />
+        <Route path="/prediction/live/groups/:groupId/member/:userId" element={<LiveMemberPredictionPage />} />
+        <Route path="/prediction/live/stats" element={<LiveStatsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

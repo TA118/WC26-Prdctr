@@ -370,6 +370,50 @@ body {
 .stats-score-tr--user .stats-score-td--score { color: #fbbf24; }
 .stats-score-tr--user .stats-score-td--pct { color: #fde68a; }
 
+/* Live Stats — match list */
+.lstats-matches { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; }
+.lstats-match-card {
+  background: #0d1829;
+  border: 1px solid #1e2d45;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lstats-match-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.lstats-match-header--clickable { cursor: pointer; }
+.lstats-match-header--clickable:hover { background: #111e32; }
+.lstats-match-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lstats-match-round { font-size: 0.72rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.06em; }
+.lstats-match-kickoff { font-size: 0.7rem; color: #475569; }
+.lstats-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.lstats-match-team { flex: 1; }
+.lstats-match-team:last-child { text-align: right; }
+.lstats-match-vs { font-size: 0.72rem; color: #475569; flex-shrink: 0; }
+.lstats-match-pcts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+}
+.lstats-pct-block { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; flex: 1; }
+.lstats-pct-label { font-size: 0.62rem; color: #64748b; text-align: center; line-height: 1.2; }
+.lstats-pct-value { font-size: 0.92rem; font-weight: 700; color: #e2e8f0; }
+.lstats-pct-divider { width: 1px; height: 28px; background: #1e2d45; flex-shrink: 0; }
+.lstats-match-expand-hint { font-size: 0.65rem; color: #3b82f6; margin-left: auto; flex-shrink: 0; }
+.lstats-match-pending { font-size: 0.75rem; color: #475569; font-style: italic; margin: 0; }
+.lstats-match-no-preds { font-size: 0.75rem; color: #334155; font-style: italic; margin: 0; }
+
 /* Teams tab */
 .stats-teams-tab { width: 100%; display: flex; flex-direction: column; gap: 1.25rem; }
 .stats-team-select {
