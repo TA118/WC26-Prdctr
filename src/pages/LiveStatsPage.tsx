@@ -26,16 +26,19 @@ function resolveTeam(
   switch (slot.kind) {
     case 'winner': {
       const g = groups.find(gr => gr.id === slot.group);
-      return g ? computeStandings(g.teams, g.matches)[0]?.team ?? null : null;
+      if (!g || !g.matches.every(m => m.homeScore !== null && m.awayScore !== null)) return null;
+      return computeStandings(g.teams, g.matches)[0]?.team ?? null;
     }
     case 'runner': {
       const g = groups.find(gr => gr.id === slot.group);
-      return g ? computeStandings(g.teams, g.matches)[1]?.team ?? null : null;
+      if (!g || !g.matches.every(m => m.homeScore !== null && m.awayScore !== null)) return null;
+      return computeStandings(g.teams, g.matches)[1]?.team ?? null;
     }
     case 'third': {
       const oppSlot = matchCtx.top === slot ? matchCtx.bottom : matchCtx.top;
       if (oppSlot.kind !== 'winner') return null;
-      if (topEight.length < 8) return null;
+      const allGroupsComplete = groups.every(g => g.matches.every(m => m.homeScore !== null && m.awayScore !== null));
+      if (!allGroupsComplete || topEight.length < 8) return null;
       const key = topEight.map(t => t.groupId).sort().join('');
       const row = THIRD_PLACE_MATCHUPS[key];
       if (!row) return null;
