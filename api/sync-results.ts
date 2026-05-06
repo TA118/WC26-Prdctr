@@ -98,7 +98,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const r = await fetch(
-      'https://sports.bzzoiro.com/api/matches/?date_from=2026-06-11&date_to=2026-07-19&page_size=200',
+      'https://sports.bzzoiro.com/api/v2/events/?league_id=27&date_from=2026-06-11&date_to=2026-07-19&limit=200',
       { headers: { Authorization: `Token ${BSD_TOKEN}` } },
     );
     if (!r.ok) throw new Error(`BSD API ${r.status}`);
