@@ -114,6 +114,41 @@ export function LiveRulesPage() {
           </tbody>
         </table>
       </div>
+      <div className="rules-colors-section">
+        <h2 className="rules-round-title">Match Card Colors</h2>
+        <p className="rules-colors-sub">Each prediction card is colour-coded once the real result is known.</p>
+        <div className="rules-colors">
+          <div className="rules-color-row">
+            <span className="rules-color-dot rules-color-dot--green" />
+            <div>
+              <span className="rules-color-label">Perfect</span>
+              <span className="rules-color-desc"> - Exact score + correct winner + correct result type</span>
+            </div>
+          </div>
+          <div className="rules-color-row">
+            <span className="rules-color-dot rules-color-dot--yellow" />
+            <div>
+              <span className="rules-color-label">Correct result</span>
+              <span className="rules-color-desc"> - Correct winner + same result type (normal time or penalties), wrong score</span>
+            </div>
+          </div>
+          <div className="rules-color-row">
+            <span className="rules-color-dot rules-color-dot--orange" />
+            <div>
+              <span className="rules-color-label">Correct winner, wrong result type</span>
+              <span className="rules-color-desc"> - Correct winner but different penalty situation (predicted normal time, actual went to penalties or vice versa)</span>
+            </div>
+          </div>
+          <div className="rules-color-row">
+            <span className="rules-color-dot rules-color-dot--red" />
+            <div>
+              <span className="rules-color-label">Wrong</span>
+              <span className="rules-color-desc"> - Your predicted winner lost — no points awarded</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="rules-round rules-tiebreaker">
         <h2 className="rules-round-title">⚖️ Tiebreaker</h2>
         <p className="rules-tiebreaker-desc">

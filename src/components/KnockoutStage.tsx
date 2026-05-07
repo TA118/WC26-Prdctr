@@ -175,7 +175,8 @@ function koMatchColor(
   const exactScore = result.home === actualResult.home && result.away === actualResult.away;
   const penSituationCorrect = (result.home === result.away) === (actualResult.home === actualResult.away);
   if (exactScore && penSituationCorrect && exactMatchup) return 'green';
-  return exactMatchup ? 'yellow' : 'orange';
+  if (!exactMatchup) return 'orange';
+  return penSituationCorrect ? 'yellow' : 'orange';
 }
 
 const KO_COLOR_LABEL: Record<string, string> = {
