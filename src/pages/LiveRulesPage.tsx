@@ -68,7 +68,7 @@ export function LiveRulesPage() {
 
       <div className="rules-hero">
         <h1>📖 Live Predictions - Rules</h1>
-        <p>How points are awarded for your live match predictions</p>
+        <p>How points are awarded for your live match-by-match predictions</p>
       </div>
 
       <div className="rules-note">
