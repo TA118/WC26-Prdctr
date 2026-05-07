@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
+import { computeTotalScore } from '../logic/predictionScoring';
 
 const DEADLINE = new Date('2026-06-11T19:00:00Z');
+const SIM_KEY = 'wc26_predictor';
 
 function useCountdown(target: Date) {
   const [diff, setDiff] = useState(() => target.getTime() - Date.now());
@@ -27,8 +31,38 @@ function formatCountdown(ms: number): string {
 
 export function FullWCHubPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const msLeft = useCountdown(DEADLINE);
   const isPastDeadline = msLeft <= 0;
+  const [userScore, setUserScore] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isPastDeadline || !user) return;
+    const simRaw = localStorage.getItem(SIM_KEY);
+    if (!simRaw) return;
+    let simData: any;
+    try { simData = JSON.parse(simRaw); } catch { return; }
+    if (!simData?.groups) return;
+
+    supabase
+      .from('full_predictions')
+      .select('data')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data?.data) return;
+        const d = data.data;
+        const score = computeTotalScore(
+          d.groups ?? [],
+          d.knockoutResults ?? {},
+          simData.groups,
+          simData.knockoutResults ?? {},
+          d.goldenBoot?.name ?? null,
+          simData.goldenBoot?.name ?? null,
+        );
+        setUserScore(score);
+      });
+  }, [isPastDeadline, user]);
 
   return (
     <div className="home-page">
@@ -47,7 +81,11 @@ export function FullWCHubPage() {
             <p>Fill your prediction for each one of the matches in the World Cup.</p>
             <div className="card-countdown">
               {isPastDeadline ? (
-                <span className="card-countdown--locked">🔒 Predictions locked</span>
+                userScore !== null ? (
+                  <span className="card-countdown--score">⭐ {userScore} pts</span>
+                ) : (
+                  <span className="card-countdown--locked">🔒 Predictions locked</span>
+                )
               ) : (
                 <>
                   <span className="card-countdown--label">Closes in </span>

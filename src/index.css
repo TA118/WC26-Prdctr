@@ -114,6 +114,12 @@ body {
   color: #fca5a5;
 }
 
+.card-countdown--score {
+  font-weight: 700;
+  color: #facc15;
+  font-size: 1rem;
+}
+
 .live-next-teams {
   font-weight: 600;
   color: #e2e8f0;
