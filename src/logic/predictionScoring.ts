@@ -1,5 +1,6 @@
 import type { Group } from '../types';
 import type { KnockoutResults } from '../components/KnockoutStage';
+import { computeKOScore } from '../components/KnockoutStage';
 import { computeStandings } from './standings';
 
 // ─── Group stage ──────────────────────────────────────────────────────────────
@@ -45,15 +46,16 @@ function groupWinnerAndRunner(group: Group): [string | null, string | null] {
 
 // Points table per round for: [exactMatchup+winner, exactMatchup+otherResult, correctWinnerDiffOpponent, teamAdvancedDiffSlot]
 const ROUND_POINTS: Record<string, [number, number, number, number]> = {
-  r32:   [4, 3, 2, 1],
-  r16:   [4, 4, 3, 2], // exact score adds +2 on top of exactMatchup+winner (handled separately)
-  qf:    [5, 5, 4, 3],
-  sf:    [7, 7, 5, 4],
-  third: [7, 7, 5, 4], // same as semi-finals
-  final: [12, 12, 10, 0],
+  r32:   [3, 0, 2, 1],
+  r16:   [4, 0, 3, 2], // exact score adds +2 on top of exactMatchup+winner (handled separately)
+  qf:    [5, 0, 4, 3],
+  sf:    [7, 0, 5, 4],
+  third: [7, 0, 5, 4], // same as semi-finals
+  final: [12, 0, 10, 0],
 };
 
 const ROUND_EXACT_SCORE_BONUS: Record<string, number> = {
+  r32:   1, // 3+1 = 4
   r16:   2, // 4+2 = 6
   qf:    3, // 5+3 = 8
   sf:    3, // 7+3 = 10
@@ -167,13 +169,12 @@ const FINAL_MATCH_ID = 104;
 
 export function computeTotalScore(
   predGroups: Group[],
-  _predKO: KnockoutResults,
+  predKO: KnockoutResults,
   actualGroups: Group[],
   actualKO: KnockoutResults,
   predGoldenBoot?: string | null,
   actualGoldenBoot?: string | null,
 ): number {
-  // Golden Boot points only awarded after the Final has been played
   const finalPlayed = (() => {
     const r = actualKO[FINAL_MATCH_ID];
     return r !== undefined && r.home !== null && r.away !== null;
@@ -181,6 +182,7 @@ export function computeTotalScore(
 
   return (
     totalGroupScore(predGroups, actualGroups) +
+    computeKOScore(predGroups, predKO, actualGroups, actualKO) +
     (finalPlayed ? scoreGoldenBoot(predGoldenBoot, actualGoldenBoot) : 0)
   );
 }

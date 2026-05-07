@@ -22,11 +22,11 @@ const ROUNDS: RoundSection[] = [
   {
     round: 'Round of 32',
     rules: [
-      { pts: 4, description: 'Exact matchup + correct winner' },
-      { pts: 3, description: 'Exact matchup + correct direction' },
+      { pts: 4, description: 'Exact matchup + exact score + correct winner' },
+      { pts: 3, description: 'Exact matchup + correct winner, wrong score' },
       { pts: 2, description: 'Correct winner, different opponent' },
-      { pts: 1, description: 'Correct team advances via different bracket slot' },
-      { pts: 0, description: 'Miss' },
+      { pts: 1, description: 'Team you predicted to reach this round advanced via a different slot' },
+      { pts: 0, description: 'Miss — predicted winner was eliminated' },
     ],
   },
   {
@@ -74,8 +74,8 @@ const COLORS = [
   { dot: 'green',  label: 'Perfect',                          desc: 'Both teams correct + exact score' },
   { dot: 'yellow', label: 'Correct result',                   desc: 'Both teams correct + correct winner (not exact score)' },
   { dot: 'orange', label: 'Correct winner, wrong opponent',   desc: 'You got the winner but they faced a different team' },
-  { dot: 'purple', label: 'Team advanced via different path', desc: 'The team reached this stage but from a different bracket slot' },
-  { dot: 'red',    label: 'Miss',                             desc: 'Team was eliminated or result was completely wrong' },
+  { dot: 'purple', label: 'Team advanced via different path', desc: 'A team you predicted to reach this round won from a different slot — their winner was not your predicted winner' },
+  { dot: 'red',    label: 'Wrong',                            desc: 'Your predicted winner was eliminated — no points awarded' },
 ];
 
 export function RulesPage() {

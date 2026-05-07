@@ -1764,6 +1764,7 @@ tbody td.team-col { text-align: left; }
 
 .bk-match--green  { border-color: rgba(74, 222, 128, 0.5); }
 .bk-match--yellow { border-color: rgba(250, 204, 21, 0.4); }
+.bk-match--orange { border-color: rgba(251, 146, 60, 0.5); }
 .bk-match--purple { border-color: rgba(168, 85, 247, 0.5); }
 .bk-match--red    { border-color: rgba(248, 113, 113, 0.5); }
 
@@ -1775,6 +1776,7 @@ tbody td.team-col { text-align: left; }
 }
 .bk-result-label--green  { color: #4ade80; background: rgba(74, 222, 128, 0.08); }
 .bk-result-label--yellow { color: #facc15; background: rgba(250, 204, 21, 0.08); }
+.bk-result-label--orange { color: #fb923c; background: rgba(251, 146, 60, 0.08); }
 .bk-result-label--purple { color: #c084fc; background: rgba(168, 85, 247, 0.08); }
 .bk-result-label--red    { color: #f87171; background: rgba(248, 113, 113, 0.08); }
 

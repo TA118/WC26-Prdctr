@@ -331,8 +331,8 @@ export function FullPredictionPage() {
             knockoutResults={knockoutResults}
             onKnockoutResultsChange={setKnockoutResults}
             locked={totalPredicted < 72 || isPastDeadline}
-            actualGroups={isPastDeadline ? simData?.groups : undefined}
-            actualKnockoutResults={isPastDeadline ? simData?.knockoutResults : undefined}
+            actualGroups={simData?.groups}
+            actualKnockoutResults={simData?.knockoutResults}
             onFinalWinner={handleFinalWinner}
           />
         ) : activeTab === THIRD_TAB ? (
