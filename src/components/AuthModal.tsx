@@ -31,7 +31,10 @@ export function AuthModal({ onClose }: Props) {
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username: username.trim() } },
+      options: {
+        data: { username: username.trim() },
+        emailRedirectTo: 'https://wc26prdctr.vercel.app',
+      },
     });
     if (err) { setError(err.message); setLoading(false); return; }
 
