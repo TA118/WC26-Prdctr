@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AuthModal } from '../components/AuthModal';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import { INITIAL_GROUPS } from '../data/groups';
 
@@ -88,25 +87,17 @@ export function PredictionPage() {
   const navigate = useNavigate();
   const msLeft = useCountdown(DEADLINE);
   const isPastDeadline = msLeft <= 0;
-  const { user, username, signOut } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
+  const { user, username } = useAuth();
 
   return (
     <div className="home-page">
       <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
 
-      {user && (
-        <div className="auth-bar-top">
-          <span className="auth-bar-welcome">
-            Welcome, <strong>{username ?? user.email}</strong>
-            <button className="auth-bar-signout" onClick={signOut}>Sign Out</button>
-          </span>
-        </div>
-      )}
-
       <div className="home-hero">
+        {user && (
+          <p className="home-welcome">Hey <strong>{username ?? user.email}</strong>, choose your game mode</p>
+        )}
         <h1 className="home-title">🎯 Prediction Games</h1>
-        <p className="home-subtitle">Choose your game mode</p>
       </div>
 
       <div className="home-cards">
@@ -138,15 +129,6 @@ export function PredictionPage() {
         </button>
       </div>
 
-      {!user && (
-        <div className="auth-bar">
-          <button className="auth-bar-btn auth-bar-btn--primary" onClick={() => setShowAuth(true)}>
-            Sign In / Register
-          </button>
-        </div>
-      )}
-
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }

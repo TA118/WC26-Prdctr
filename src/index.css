@@ -2002,6 +2002,27 @@ tbody td.team-col { text-align: left; }
   border-color: #60a5fa;
 }
 
+.home-welcome {
+  color: #94a3b8;
+  font-size: 1.3rem;
+  margin: 0 0 0.25rem;
+}
+
+.home-welcome strong {
+  color: #e8eaf0;
+}
+
+.home-login-required {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  border-radius: 8px;
+  color: #fb923c;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 /* ── Auth modal ── */
 .auth-modal {
   display: flex;
