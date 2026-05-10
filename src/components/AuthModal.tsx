@@ -27,6 +27,7 @@ export function AuthModal({ onClose }: Props) {
     setError('');
     if (!username.trim()) { setError('Please choose a username.'); return; }
     if (username.trim().length < 3) { setError('Username must be at least 3 characters.'); return; }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) { setError('Username can only contain letters, numbers, _ or -'); return; }
     setLoading(true);
     const { data, error: err } = await supabase.auth.signUp({
       email,
