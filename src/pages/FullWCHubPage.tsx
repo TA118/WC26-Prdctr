@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { UserMenu } from '../components/UserMenu';
 import { computeTotalScore } from '../logic/predictionScoring';
 
 const DEADLINE = new Date('2026-06-11T19:00:00Z');
@@ -67,6 +68,7 @@ export function FullWCHubPage() {
   return (
     <div className="home-page">
       <button className="back-btn" onClick={() => navigate('/prediction')}>← Back</button>
+      <div className="user-menu-corner"><UserMenu /></div>
 
       <div className="home-hero">
         <h1 className="home-title">📋 Full WC Predictions</h1>

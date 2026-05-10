@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/AuthModal';
+import { UserMenu } from '../components/UserMenu';
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { user, username, signOut } = useAuth();
+  const { user, username } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showLoginMsg, setShowLoginMsg] = useState(false);
 
@@ -19,14 +20,9 @@ export function HomePage() {
 
   return (
     <div className="home-page">
-      {user ? (
-        <div className="auth-bar-top">
-          <span className="auth-bar-welcome">
-            Welcome, <strong>{username ?? user.email}</strong>
-            <button className="auth-bar-signout" onClick={signOut}>Sign Out</button>
-          </span>
-        </div>
-      ) : (
+      {user && <div className="user-menu-corner"><UserMenu /></div>}
+
+      {!user && (
         <div className="auth-bar">
           <button className="auth-bar-btn auth-bar-btn--primary" onClick={() => { setShowAuth(true); setShowLoginMsg(false); }}>
             Sign In / Register
@@ -35,6 +31,9 @@ export function HomePage() {
       )}
 
       <div className="home-hero">
+        {user && (
+          <p className="home-welcome">Welcome, <strong>{username ?? user.email}</strong></p>
+        )}
         <h1 className="home-title">⚽ World Cup 2026</h1>
         <p className="home-subtitle">Choose your experience</p>
       </div>

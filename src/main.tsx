@@ -23,6 +23,7 @@ import { LiveJoinGroupPage } from './pages/LiveJoinGroupPage.tsx';
 import { LiveGlobalLeaderboardPage } from './pages/LiveGlobalLeaderboardPage.tsx';
 import { LiveMemberPredictionPage } from './pages/LiveMemberPredictionPage.tsx';
 import { LiveStatsPage } from './pages/LiveStatsPage.tsx';
+import { ProfilePage } from './pages/ProfilePage.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
@@ -51,6 +52,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/prediction/live/groups/:groupId" element={<LiveGroupLeaderboardPage />} />
         <Route path="/prediction/live/groups/:groupId/member/:userId" element={<LiveMemberPredictionPage />} />
         <Route path="/prediction/live/stats" element={<LiveStatsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

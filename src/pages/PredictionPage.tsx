@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserMenu } from '../components/UserMenu';
+import { AuthModal } from '../components/AuthModal';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import { INITIAL_GROUPS } from '../data/groups';
 
@@ -88,15 +90,34 @@ export function PredictionPage() {
   const msLeft = useCountdown(DEADLINE);
   const isPastDeadline = msLeft <= 0;
   const { user, username } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+
+  if (!user) {
+    return (
+      <div className="home-page">
+        <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+        <div className="home-hero">
+          <h1 className="home-title">🎯 Prediction Games</h1>
+          <p className="home-subtitle">You need to be signed in to access Prediction Games</p>
+        </div>
+        <div className="auth-bar">
+          <button className="auth-bar-btn auth-bar-btn--primary" onClick={() => setShowAuth(true)}>
+            Sign In / Register
+          </button>
+        </div>
+        {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      </div>
+    );
+  }
 
   return (
     <div className="home-page">
       <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
 
+      <div className="user-menu-corner"><UserMenu /></div>
+
       <div className="home-hero">
-        {user && (
-          <p className="home-welcome">Hey <strong>{username ?? user.email}</strong>, choose your game mode</p>
-        )}
+        <p className="home-welcome">Hey <strong>{username ?? user.email}</strong>, choose your game mode</p>
         <h1 className="home-title">🎯 Prediction Games</h1>
       </div>
 

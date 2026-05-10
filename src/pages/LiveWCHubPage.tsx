@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { UserMenu } from '../components/UserMenu';
 import { syncAndFetchResults } from '../lib/actualResults';
 import { totalGroupScore } from '../logic/predictionScoring';
 import { INITIAL_GROUPS } from '../data/groups';
@@ -29,6 +30,7 @@ export function LiveWCHubPage() {
   return (
     <div className="home-page">
       <button className="back-btn" onClick={() => navigate('/prediction')}>← Back</button>
+      <div className="user-menu-corner"><UserMenu /></div>
 
       <div className="home-hero">
         <h1 className="home-title">📡 Live WC Predictions</h1>
