@@ -1,9 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 import { authCheck, makeSupabase, sendToAll } from './_push';
 
 const WC_START = new Date('2026-06-11T19:00:00Z');
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).end();
   if (!authCheck(req)) return res.status(401).json({ error: 'Unauthorized' });
 
