@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 export function UserMenu() {
   const { user, username, signOut } = useAuth();
@@ -8,6 +10,8 @@ export function UserMenu() {
   const [open, setOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { canInstall, install } = usePWAInstall();
+  const { isSupported, subscribed, subscribe, unsubscribe } = usePushNotifications();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -38,6 +42,22 @@ export function UserMenu() {
             >
               👤 My Profile
             </button>
+            {canInstall && (
+              <button
+                className="user-menu-item"
+                onClick={() => { setOpen(false); install(); }}
+              >
+                📲 Download App
+              </button>
+            )}
+            {isSupported && (
+              <button
+                className="user-menu-item"
+                onClick={() => { setOpen(false); subscribed ? unsubscribe() : subscribe(); }}
+              >
+                {subscribed ? '🔕 Mute Notifications' : '🔔 Enable Notifications'}
+              </button>
+            )}
             <button
               className="user-menu-item user-menu-item--danger"
               onClick={() => { setOpen(false); setShowLogoutConfirm(true); }}

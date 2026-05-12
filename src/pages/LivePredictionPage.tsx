@@ -217,6 +217,19 @@ function PickerModal({ target, onSelectWinner, onSelectScorer, onClose }: Picker
   );
 }
 
+function mergeGroupForCombined(predGroup: Group, actualGroup: Group): Group {
+  return {
+    ...predGroup,
+    matches: predGroup.matches.map(m => {
+      const actual = actualGroup.matches.find(am => am.id === m.id);
+      if (actual && actual.homeScore !== null && actual.awayScore !== null) {
+        return { ...m, homeScore: actual.homeScore, awayScore: actual.awayScore };
+      }
+      return m;
+    }),
+  };
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export function LivePredictionPage() {
@@ -286,6 +299,9 @@ export function LivePredictionPage() {
   useEffect(() => {
     syncAndFetchResults().then(({ actualGroups: ag }) => setActualGroups(ag));
   }, []);
+
+  // ── Standings toggle (per tab): false = Real (default), true = Combined ───
+  const [liveToggle, setLiveToggle] = useState<Record<string, boolean>>({});
 
   // ── Per-match locking (re-checks every 30 s) ───────────────────────────────
   const [now, setNow] = useState(Date.now());
@@ -411,21 +427,49 @@ export function LivePredictionPage() {
     actualGroups.every(g => g.matches.every(m => m.homeScore !== null && m.awayScore !== null));
   const koPredicted = Object.values(knockoutResults).filter(r => r.home !== null && r.away !== null).length;
 
+  // bestThird used for KO seeding and tiebreak detection (always from standingsGroups)
   const bestThird = useMemo(() => getBestThirdPlaced(standingsGroups), [standingsGroups]);
-  const sortedThirds = useMemo(
-    () => applyThirdPlaceManualRankings(bestThird, thirdPlaceRankings),
-    [bestThird, thirdPlaceRankings]
-  );
-  const qualifyingThirdIds = useMemo(
-    () => new Set(sortedThirds.slice(0, 8).map(t => t.team.id)),
-    [sortedThirds]
-  );
   const thirdPlaceUnresolvedTies = useMemo(() => {
     if (totalPredicted !== 72) return [];
     return getThirdPlaceBoundaryTies(bestThird).filter(
       g => !g.every(id => thirdPlaceRankings[id] !== undefined)
     );
   }, [bestThird, thirdPlaceRankings, totalPredicted]);
+
+  // 3rd-tab display follows its own toggle
+  const thirdDisplayGroups = useMemo(() => {
+    if (!hasActualResults) return groups;
+    if (liveToggle[THIRD_TAB]) {
+      return groups.map(g => {
+        const actual = actualGroups.find(ag => ag.id === g.id);
+        return actual ? mergeGroupForCombined(g, actual) : g;
+      });
+    }
+    return actualGroups;
+  }, [hasActualResults, liveToggle, groups, actualGroups]);
+
+  const bestThirdDisplay = useMemo(() => getBestThirdPlaced(thirdDisplayGroups), [thirdDisplayGroups]);
+  const sortedThirdsDisplay = useMemo(
+    () => applyThirdPlaceManualRankings(bestThirdDisplay, thirdPlaceRankings),
+    [bestThirdDisplay, thirdPlaceRankings]
+  );
+
+  // qualifyingThirdIds follows the ACTIVE TAB's own toggle independently
+  const qualifyingSourceGroups = useMemo(() => {
+    if (!hasActualResults) return groups;
+    const isCombined = activeTab === KO_TAB ? false : liveToggle[activeTab];
+    if (!isCombined) return actualGroups;
+    return groups.map(g => {
+      const actual = actualGroups.find(ag => ag.id === g.id);
+      return actual ? mergeGroupForCombined(g, actual) : g;
+    });
+  }, [hasActualResults, activeTab, liveToggle, groups, actualGroups]);
+
+  const qualifyingThirdIds = useMemo(() => {
+    const bt = getBestThirdPlaced(qualifyingSourceGroups);
+    const sorted = applyThirdPlaceManualRankings(bt, thirdPlaceRankings);
+    return new Set(sorted.slice(0, 8).map(t => t.team.id));
+  }, [qualifyingSourceGroups, thirdPlaceRankings]);
 
   const current = groups.find(g => g.id === activeTab);
 
@@ -538,7 +582,19 @@ export function LivePredictionPage() {
         ) : activeTab === THIRD_TAB ? (
           <section>
             <h2>3rd Places</h2>
-            <BestThirdTable teams={sortedThirds} groups={standingsGroups} />
+            {hasActualResults && (
+              <div className="standings-toggle">
+                <button
+                  className={`standings-toggle-btn${!liveToggle[THIRD_TAB] ? ' active' : ''}`}
+                  onClick={() => setLiveToggle(prev => ({ ...prev, [THIRD_TAB]: false }))}
+                >Real</button>
+                <button
+                  className={`standings-toggle-btn${liveToggle[THIRD_TAB] ? ' active' : ''}`}
+                  onClick={() => setLiveToggle(prev => ({ ...prev, [THIRD_TAB]: true }))}
+                >Combined</button>
+              </div>
+            )}
+            <BestThirdTable teams={sortedThirdsDisplay} groups={thirdDisplayGroups} />
             <p className="qualify-note">Top 8 teams qualify ↑</p>
             {thirdPlaceUnresolvedTies.length > 0 && (
               <ManualTiebreakModal
@@ -550,17 +606,37 @@ export function LivePredictionPage() {
             )}
           </section>
         ) : current ? (
-          <GroupView
-            key={current.id}
-            group={current}
-            manualRankings={allManualRankings[current.id] ?? {}}
-            qualifyingThirdIds={qualifyingThirdIds}
-            matchLocks={matchLocks}
-            actualGroup={hasActualResults ? actualGroups.find(g => g.id === current.id) : undefined}
-            useActualForStandings={hasActualResults}
-            onScoreChange={(matchId, hs, as_) => handleScoreChange(current.id, matchId, hs, as_)}
-            onManualRankingsChange={r => handleManualRankingsChange(current.id, r)}
-          />
+          <>
+            {hasActualResults && (
+              <div className="standings-toggle">
+                <button
+                  className={`standings-toggle-btn${!liveToggle[activeTab] ? ' active' : ''}`}
+                  onClick={() => setLiveToggle(prev => ({ ...prev, [activeTab]: false }))}
+                >Real</button>
+                <button
+                  className={`standings-toggle-btn${liveToggle[activeTab] ? ' active' : ''}`}
+                  onClick={() => setLiveToggle(prev => ({ ...prev, [activeTab]: true }))}
+                >Combined</button>
+              </div>
+            )}
+            <GroupView
+              key={current.id}
+              group={current}
+              manualRankings={allManualRankings[current.id] ?? {}}
+              qualifyingThirdIds={qualifyingThirdIds}
+              matchLocks={matchLocks}
+              actualGroup={hasActualResults ? actualGroups.find(g => g.id === current.id) : undefined}
+              standingsGroup={(() => {
+                if (!hasActualResults) return undefined;
+                const actual = actualGroups.find(g => g.id === current.id);
+                return liveToggle[activeTab] && actual
+                  ? mergeGroupForCombined(current, actual)
+                  : actual;
+              })()}
+              onScoreChange={(matchId, hs, as_) => handleScoreChange(current.id, matchId, hs, as_)}
+              onManualRankingsChange={r => handleManualRankingsChange(current.id, r)}
+            />
+          </>
         ) : null}
       </main>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { syncAndFetchResults, buildActualGroups } from '../lib/actualResults';
+import { computeTotalScore } from '../logic/predictionScoring';
 import { INITIAL_GROUPS } from '../data/groups';
 import { GROUP_SCHEDULE } from '../data/groupSchedule';
 import type { Group } from '../types';
@@ -33,6 +34,7 @@ export function MemberPredictionPage() {
   const [username, setUsername] = useState('');
   const [predData, setPredData] = useState<any>(null);
   const [perfectCount, setPerfectCount] = useState(0);
+  const [userScore, setUserScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('A');
 
@@ -60,6 +62,15 @@ export function MemberPredictionPage() {
             }
           }
           setPerfectCount(count);
+          const score = computeTotalScore(
+            pred.data.groups ?? [],
+            pred.data.knockoutResults ?? {},
+            actualGroups,
+            {},
+            pred.data.goldenBoot?.name ?? null,
+            null,
+          );
+          setUserScore(score);
         }
       }
       setLoading(false);
@@ -87,6 +98,12 @@ export function MemberPredictionPage() {
               {predData?.goldenBoot
                 ? <><span className="mp-stat-flag">{predData.goldenBoot.flag}</span>{predData.goldenBoot.name}</>
                 : <span className="mp-stat-empty">Not chosen</span>}
+            </div>
+          </div>
+          <div className="mp-stat-card">
+            <div className="mp-stat-label">🏅 Score</div>
+            <div className="mp-stat-value mp-stat-value--highlight">
+              {userScore !== null ? userScore : '—'}
             </div>
           </div>
           <div className="mp-stat-card">

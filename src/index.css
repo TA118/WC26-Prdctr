@@ -171,6 +171,28 @@ body {
 .stats-hero p { color: #94a3b8; font-size: 0.9rem; margin: 0; }
 .stats-total { color: #64748b; font-size: 0.8rem; margin-top: 0.3rem; }
 
+.stats-filter {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0 0;
+}
+
+.stats-group-select {
+  background: #111827;
+  color: #e8eaf0;
+  border: 1px solid #2a3050;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+}
+
+.stats-group-select:focus {
+  border-color: #3b82f6;
+}
+
 .stats-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -1196,6 +1218,39 @@ tbody td.team-col { text-align: left; }
 
 .positive { color: #4ade80; }
 .negative { color: #f87171; }
+
+/* ── Standings toggle pill ──────────────────────────────────────────────── */
+
+.standings-toggle {
+  display: flex;
+  width: fit-content;
+  margin: 0 auto 0.75rem;
+  border: 1px solid #2a3050;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.standings-toggle-btn {
+  padding: 0.3rem 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: transparent;
+  color: #8b9cc8;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.standings-toggle-btn.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.standings-toggle-btn:not(.active):hover {
+  background: #1a2040;
+  color: #c0caee;
+}
 
 .qualify-note {
   margin-top: 0.5rem;

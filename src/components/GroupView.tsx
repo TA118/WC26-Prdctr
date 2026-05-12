@@ -13,12 +13,17 @@ interface Props {
   matchLocks?: Record<string, boolean>;
   actualGroup?: Group;
   useActualForStandings?: boolean;
+  standingsGroup?: Group;
   onScoreChange: (matchId: string, homeScore: number | null, awayScore: number | null) => void;
   onManualRankingsChange: (rankings: ManualRankings) => void;
 }
 
-export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = false, matchLocks, actualGroup, useActualForStandings = false, onScoreChange, onManualRankingsChange }: Props) {
-  const standingsMatches = useActualForStandings && actualGroup ? actualGroup.matches : group.matches;
+export function GroupView({ group, manualRankings, qualifyingThirdIds, locked = false, matchLocks, actualGroup, useActualForStandings = false, standingsGroup, onScoreChange, onManualRankingsChange }: Props) {
+  const standingsMatches = standingsGroup
+    ? standingsGroup.matches
+    : useActualForStandings && actualGroup
+      ? actualGroup.matches
+      : group.matches;
   const allPlayed = standingsMatches.every(m => m.homeScore !== null && m.awayScore !== null);
   const playedCount = standingsMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
 

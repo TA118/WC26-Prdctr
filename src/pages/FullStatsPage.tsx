@@ -612,10 +612,12 @@ export function FullStatsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('winner');
-  const [rawPreds, setRawPreds] = useState<any[]>([]);
+  const [allRows, setAllRows] = useState<{ user_id: string; data: any }[]>([]);
   const [userScores, setUserScores] = useState<Record<string, string>>({});
   const [actualScores, setActualScores] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [userGroups, setUserGroups] = useState<{ id: string; name: string; memberIds: Set<string> }[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const isPastDeadline = Date.now() >= DEADLINE.getTime();
 
   useEffect(() => {
@@ -624,7 +626,7 @@ export function FullStatsPage() {
       .select('user_id, data')
       .then(({ data }) => {
         const rows = (data ?? []).filter((r: any) => r.data);
-        setRawPreds(rows.map((r: any) => r.data));
+        setAllRows(rows.map((r: any) => ({ user_id: r.user_id, data: r.data })));
         if (user) {
           const mine = rows.find((r: any) => r.user_id === user.id);
           if (mine?.data?.groups) {
@@ -642,6 +644,36 @@ export function FullStatsPage() {
         setLoading(false);
       });
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('group_members')
+      .select('group_id, prediction_groups(name)')
+      .eq('user_id', user.id)
+      .then(async ({ data: memberships }) => {
+        if (!memberships?.length) return;
+        const groupIds = memberships.map((m: any) => m.group_id);
+        const { data: members } = await supabase
+          .from('group_members')
+          .select('group_id, user_id')
+          .in('group_id', groupIds);
+        setUserGroups(memberships.map((m: any) => ({
+          id: m.group_id,
+          name: (m.prediction_groups as any)?.name ?? m.group_id,
+          memberIds: new Set(
+            (members ?? []).filter((mem: any) => mem.group_id === m.group_id).map((mem: any) => mem.user_id)
+          ),
+        })));
+      });
+  }, [user]);
+
+  const rawPreds = useMemo(() => {
+    if (!selectedGroupId) return allRows.map(r => r.data);
+    const group = userGroups.find(g => g.id === selectedGroupId);
+    if (!group) return allRows.map(r => r.data);
+    return allRows.filter(r => group.memberIds.has(r.user_id)).map(r => r.data);
+  }, [allRows, selectedGroupId, userGroups]);
 
   useEffect(() => {
     syncAndFetchResults().then(({ results }) => {
@@ -671,6 +703,21 @@ export function FullStatsPage() {
           <p className="stats-total">{stats.total} total predictions</p>
         )}
       </div>
+
+      {user && userGroups.length > 0 && (
+        <div className="stats-filter">
+          <select
+            className="stats-group-select"
+            value={selectedGroupId ?? ''}
+            onChange={e => setSelectedGroupId(e.target.value || null)}
+          >
+            <option value="">🌍 All Users</option>
+            {userGroups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="stats-tabs">
         {TABS.map(t => (

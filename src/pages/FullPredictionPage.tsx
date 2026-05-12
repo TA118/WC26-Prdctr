@@ -13,6 +13,7 @@ import { GoldenBootModal } from '../components/GoldenBootModal';
 import type { Player } from '../data/players';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { syncAndFetchResults } from '../lib/actualResults';
 
 const THIRD_TAB = '3rd';
 const KO_TAB = 'ko';
@@ -116,6 +117,15 @@ export function FullPredictionPage() {
 
   const [simData] = useState(loadSimulatorData);
 
+  // ── Actual results from BSD API ────────────────────────────────────────────
+  const [actualGroups, setActualGroups] = useState<Group[]>([]);
+  useEffect(() => {
+    syncAndFetchResults().then(({ actualGroups: ag }) => setActualGroups(ag));
+  }, []);
+
+  // ── Standings toggle (per tab): false = Predicted (default), true = Real ──
+  const [fullToggle, setFullToggle] = useState<Record<string, boolean>>({});
+
   const handleScoreChange = useCallback(
     (groupId: string, matchId: string, homeScore: number | null, awayScore: number | null) => {
       const existing = groupsRef.current
@@ -213,15 +223,35 @@ export function FullPredictionPage() {
   const isPastDeadline = msLeft <= 0;
   const standingsGroups = isPastDeadline && simData ? simData.groups : groups;
 
+  const hasActualResultsFull = actualGroups.some(g => g.matches.some(m => m.homeScore !== null));
+  const showFullToggle = isPastDeadline && hasActualResultsFull;
+
   const bestThird = useMemo(() => getBestThirdPlaced(standingsGroups), [standingsGroups]);
-  const sortedThirds = useMemo(
-    () => applyThirdPlaceManualRankings(bestThird, thirdPlaceRankings),
-    [bestThird, thirdPlaceRankings],
+
+  // 3rd-tab display follows its own toggle
+  const fullThirdDisplayGroups = useMemo(() => {
+    if (showFullToggle && fullToggle[THIRD_TAB]) return actualGroups;
+    return groups;
+  }, [showFullToggle, fullToggle, actualGroups, groups]);
+
+  const bestThirdDisplay = useMemo(() => getBestThirdPlaced(fullThirdDisplayGroups), [fullThirdDisplayGroups]);
+  const sortedThirdsDisplay = useMemo(
+    () => applyThirdPlaceManualRankings(bestThirdDisplay, thirdPlaceRankings),
+    [bestThirdDisplay, thirdPlaceRankings],
   );
-  const qualifyingThirdIds = useMemo(
-    () => new Set(sortedThirds.slice(0, 8).map(t => t.team.id)),
-    [sortedThirds],
-  );
+
+  // qualifyingThirdIds follows the ACTIVE TAB's own toggle independently
+  const qualifyingSourceGroups = useMemo(() => {
+    if (!showFullToggle) return groups;
+    const showReal = activeTab === KO_TAB ? false : (fullToggle[activeTab] ?? false);
+    return showReal ? actualGroups : groups;
+  }, [showFullToggle, activeTab, fullToggle, actualGroups, groups]);
+
+  const qualifyingThirdIds = useMemo(() => {
+    const bt = getBestThirdPlaced(qualifyingSourceGroups);
+    const sorted = applyThirdPlaceManualRankings(bt, thirdPlaceRankings);
+    return new Set(sorted.slice(0, 8).map(t => t.team.id));
+  }, [qualifyingSourceGroups, thirdPlaceRankings]);
   const thirdPlaceUnresolvedTies = useMemo(() => {
     if (totalPredicted !== 72) return [];
     return getThirdPlaceBoundaryTies(bestThird).filter(
@@ -338,7 +368,19 @@ export function FullPredictionPage() {
         ) : activeTab === THIRD_TAB ? (
           <section>
             <h2>3rd Places</h2>
-            <BestThirdTable teams={sortedThirds} groups={groups} />
+            {showFullToggle && (
+              <div className="standings-toggle">
+                <button
+                  className={`standings-toggle-btn${!fullToggle[THIRD_TAB] ? ' active' : ''}`}
+                  onClick={() => setFullToggle(prev => ({ ...prev, [THIRD_TAB]: false }))}
+                >Predicted</button>
+                <button
+                  className={`standings-toggle-btn${fullToggle[THIRD_TAB] ? ' active' : ''}`}
+                  onClick={() => setFullToggle(prev => ({ ...prev, [THIRD_TAB]: true }))}
+                >Real</button>
+              </div>
+            )}
+            <BestThirdTable teams={sortedThirdsDisplay} groups={fullThirdDisplayGroups} />
             <p className="qualify-note">Top 8 teams qualify ↑</p>
             {thirdPlaceUnresolvedTies.length > 0 && (
               <ManualTiebreakModal
@@ -350,17 +392,33 @@ export function FullPredictionPage() {
             )}
           </section>
         ) : current ? (
-          <GroupView
-            key={current.id}
-            group={current}
-            manualRankings={allManualRankings[current.id] ?? {}}
-            qualifyingThirdIds={qualifyingThirdIds}
-            locked={isPastDeadline}
-            actualGroup={simData?.groups.find(g => g.id === current.id)}
-            useActualForStandings={isPastDeadline && !!simData}
-            onScoreChange={(matchId, hs, as_) => handleScoreChange(current.id, matchId, hs, as_)}
-            onManualRankingsChange={r => handleManualRankingsChange(current.id, r)}
-          />
+          <>
+            {showFullToggle && (
+              <div className="standings-toggle">
+                <button
+                  className={`standings-toggle-btn${!fullToggle[activeTab] ? ' active' : ''}`}
+                  onClick={() => setFullToggle(prev => ({ ...prev, [activeTab]: false }))}
+                >Predicted</button>
+                <button
+                  className={`standings-toggle-btn${fullToggle[activeTab] ? ' active' : ''}`}
+                  onClick={() => setFullToggle(prev => ({ ...prev, [activeTab]: true }))}
+                >Real</button>
+              </div>
+            )}
+            <GroupView
+              key={current.id}
+              group={current}
+              manualRankings={allManualRankings[current.id] ?? {}}
+              qualifyingThirdIds={qualifyingThirdIds}
+              locked={isPastDeadline}
+              actualGroup={simData?.groups.find(g => g.id === current.id)}
+              standingsGroup={showFullToggle && fullToggle[activeTab]
+                ? actualGroups.find(g => g.id === current.id)
+                : undefined}
+              onScoreChange={(matchId, hs, as_) => handleScoreChange(current.id, matchId, hs, as_)}
+              onManualRankingsChange={r => handleManualRankingsChange(current.id, r)}
+            /></>
+
         ) : null}
       </main>
 
