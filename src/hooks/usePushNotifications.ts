@@ -32,23 +32,29 @@ export function usePushNotifications() {
 
   const subscribe = async () => {
     if (!user || !isSupported) return;
-    const perm = await Notification.requestPermission();
-    setPermission(perm);
-    if (perm !== 'granted') return;
+    try {
+      const perm = await Notification.requestPermission();
+      setPermission(perm);
+      if (perm !== 'granted') return;
 
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource,
-    });
+      const reg = await navigator.serviceWorker.ready;
+      console.log('SW ready, VAPID key:', VAPID_PUBLIC_KEY?.slice(0, 20));
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource,
+      });
+      console.log('Push sub created:', sub.endpoint?.slice(0, 40));
 
-    const { error } = await supabase.from('push_subscriptions').upsert(
-      { user_id: user.id, subscription: sub.toJSON() },
-      { onConflict: 'user_id' },
-    );
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        { user_id: user.id, subscription: sub.toJSON() },
+        { onConflict: 'user_id' },
+      );
 
-    if (error) { console.error('push_subscriptions upsert failed:', error); return; }
-    setSubscribed(true);
+      if (error) { console.error('Supabase upsert failed:', error); return; }
+      setSubscribed(true);
+    } catch (err) {
+      console.error('Subscribe error:', err);
+    }
   };
 
   const unsubscribe = async () => {
